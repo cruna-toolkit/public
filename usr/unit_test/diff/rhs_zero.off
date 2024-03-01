@@ -1,0 +1,43 @@
+module rhs_zero
+
+  use discretisation_x
+  use parameter
+
+  ! hack
+  use io
+  ! use parallelism
+
+  private
+
+  public right_hand_side_3d
+
+contains
+
+!!!=================================================================================================
+  subroutine right_hand_side_3d(rhs,q,t)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:,:), intent(out) :: rhs
+    real(kind=rk), dimension(:,:,:,:), intent(in)  :: q
+    real(kind=rk)                    , intent(in)  :: t
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:)  , allocatable :: a_x
+    integer                                        :: i
+    integer                                        :: ierr ! hack
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    allocate(a_x(params%geom%n1b,params%geom%n2b,params%geom%n3b  ))
+
+    !call store(q(:,:,:,2),'debug_field_A')
+
+    call Dx1(a_x,q(:,:,:,2),params%geom%dx1)
+
+    !call store(a_x,'debug_field_B')
+    !call mpi_barrier(params%parallelism%world_comm,ierr)
+    !call stop_cruna
+
+    rhs = q*t*0.0_rk
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  end subroutine right_hand_side_3d
+!!!=================================================================================================
+
+end module rhs_zero

@@ -1,0 +1,17 @@
+% type; i1s; i1e; i2s; i2e; i3s; i3e;
+
+% walls:
+   % 100;   1;   1;   1; inf;   1; inf;     2   % XM
+   % 100; inf; inf;   1; inf;   1; inf;     2   % XP
+   % 100;   1; inf;   1;   1;   1; inf;     3   % YM
+   % 100;   1; inf; inf; inf;   1; inf;     3   % YP
+   % 100;   1; inf;   1; inf;   1;   1;     4   % ZM
+   % 100;   1; inf;   1; inf; inf; inf;     4   % ZP
+
+% nonrefl.:
+   201;   1;   1;   1; inf;   1; inf;    -1; 0; 0  % XM
+   201; inf; inf;   1; inf;   1; inf;     1; 0; 0  % XP
+   201;   1; inf;   1;   1;   1; inf;     0;-1; 0  % YM
+   201;   1; inf; inf; inf;   1; inf;     0; 1; 0  % YP
+   201;   1; inf;   1; inf;   1;   1;     0; 0;-1  % ZM
+   201;   1; inf;   1; inf; inf; inf;     0; 0; 1  % ZP

@@ -1,0 +1,10 @@
+FFTW3_path = $(LIB)/fftw-3.3.8
+
+.phony: fftw3
+fftw3:
+	$(warning Building FFTW generically. Please consider to adapt this build to your hardware specifics.)
+	@cd $(EXT); tar xfvz fftw-3.3.8.tar.gz -C $(LIB)
+	@cd $(FFTW3_path); ./configure --enable-static
+	@cd $(FFTW3_path); make -j`nproc --all` 
+	@cd $(FFTW3_path); cp -fv ./.libs/libfftw3.a $(LIB)
+	@cd $(FFTW3_path); cp -fv ./api/fftw3.f $(LIB)

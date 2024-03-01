@@ -1,0 +1,75 @@
+#-*-Makefile-*-# <- defines highlighting of Emacs
+# 
+###################################################################################################
+# CRUNA - LOCAL MAKEFILE (SRC)                                                                    #
+# 2017-11-28 (ml)                                                                                 #
+###################################################################################################
+
+ALLF90 =$(wildcard $(CAS)/*.f90)				# select all .f90-files in the cruna usr/cas folder
+ALLF90+=$(wildcard $(CAS)/*.F90)
+ALLF90+=$(wildcard $(SRC)/*/*.f90)				# select all .f90-files in the cruna src folder
+ALLF90+=$(wildcard $(SRC)/*/*.F90)
+
+## filter-out mains (might be improved by find/cat/program and so on ...)
+ifeq ($(MAKECMDGOALS), cruna)
+ALLF90:=$(filter-out $(CAS)/cruna_cdps.f90, $(ALLF90))
+ALLF90:=$(filter-out $(CAS)/cruna_hpc.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_cdps.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_hpc.f90, $(ALLF90))
+endif
+
+ifeq ($(MAKECMDGOALS), cruna_hpc)
+ALLF90:=$(filter-out $(CAS)/cruna.f90, $(ALLF90))
+ALLF90:=$(filter-out $(CAS)/cruna_cdps.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_cdps.f90, $(ALLF90))
+endif
+
+ifeq ($(MAKECMDGOALS), cruna_cdps)
+ALLF90:=$(filter-out $(CAS)/cruna.f90, $(ALLF90))
+ALLF90:=$(filter-out $(CAS)/cruna_hpc.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_hpc.f90, $(ALLF90))
+endif
+## filter-out mains (end)
+
+OBJS=$(addsuffix .o, $(notdir $(basename $(ALLF90))))		# create objects (targets) from ALLF90
+DEPS=$(addprefix $(OBJ)/, $(OBJS))				# create dependencies (targets) from ALLF90 in obj-directory
+
+.PHONY: cruna
+cruna: $(OBJS)
+	@echo ""
+	@echo "general compiler options: " $(COPT)
+	@echo "local   compiler options: " $(LCOPT)
+
+.PHONY: cruna_hpc
+cruna_hpc: $(OBJS)
+	@echo ""
+	@echo "general compiler options: " $(COPT)
+	@echo "local   compiler options: " $(LCOPT)
+
+.PHONY: cruna_cdps
+cruna_cdps: $(OBJS)
+	@echo ""
+	@echo "general compiler options: " $(COPT)
+	@echo "local   compiler options: " $(LCOPT)
+
+#VPATH+=$(dir $(realpath $(ALLF90))):$(OBJ)			# blanks as seperator (might work only on unix systems)
+VPATH=$(dir $(realpath $(ALLF90))):$(OBJ)			# blanks as seperator (might work only on unix systems)
+
+include $(DEPS:.o=.d)
+
+# compile
+ifeq ($(strip $(COMP)), gnu)
+%.o: %.f90 
+	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -J$(OBJ)
+%.o: %.F90
+	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -J$(OBJ)
+endif
+
+ifeq ($(strip $(COMP)), intel)
+%.o: %.f90 
+	 $(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -module $(OBJ)
+%.o: %.F90
+	 $(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -module $(OBJ)
+endif

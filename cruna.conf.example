@@ -1,0 +1,34 @@
+export USER=unit_test
+export CASE=acoustic_gauss_pulse
+
+# select compiler
+export COMP=intel
+#export COMP=gnu
+
+# compiler setup
+export GENERIC_MAKEFILE=generic
+export LOCAL_MAKEFILE=with_system_libs.example
+
+export COPT       		# compiler flags (aka FOPTS) >>> used by makefile_cruna_objects
+export LOPT       		# linker flags (aka LDOPTS) >>> used by main makefile
+
+# debug options (slow!)
+ifeq (gnu,$(strip $(COMP)))
+     COPT+=-Wall#     	    	# all warnings
+     COPT+=-g#			# match program addresses to sourcecode
+     COPT+=-fbacktrace#		# add sourcecode linenumbers
+     COPT+=-fbounds-check#	# check indices are within array boundaries
+     COPT+=-fmax-errors=1#	# compiler stops at 1st error
+     # GNU gprof profiler
+     #COPT+=-p
+     #LOPT+=-p
+     #export GMON_OUT_PREFIX=gmon.out
+     # environment variables of gprof need to be exported before
+endif
+ifeq (intel,$(strip $(COMP)))
+     COPT+=-warn all# 	    	# all warnings
+     #COPT+=-g#	 		# match program addresses to sourcecode
+     #COPT+=-traceback#		# add sourcecode linenumbers
+     #COPT+=-CB#		# check indices are within array boundaries
+endif
+

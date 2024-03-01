@@ -1,0 +1,38 @@
+%% equation
+equation.nbr_vars = 5
+
+%% geometry
+geom.n1 = 64
+geom.n2 = 64
+geom.n3 = 64
+
+geom.x10 = 0.0
+geom.x20 = 0.0
+geom.x30 = 0.0
+geom.x11 = 1.0
+geom.x21 = 1.0
+geom.x31 = 1.0
+
+%% init
+init.rho = 1.205747605164515
+init.u1  = 0
+init.u2  = 0
+init.u3  = 0
+init.p   = 101325
+
+io.workdirectory = ./
+
+%% material
+material.gamma = 1.4
+
+%% parallelism
+parallelism.i1 = 2
+parallelism.i2 = 1
+parallelism.i3 = 1
+
+%% time
+time.steps   = 100
+time.subsets = 1  
+
+time.t  = 0
+time.dt = 2.08333333333333e-05 

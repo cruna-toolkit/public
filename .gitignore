@@ -1,0 +1,96 @@
+cruna.conf
+
+# Compiled libraries
+lib/*
+/include
+
+# Compiled dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled executables
+bin/*
+
+# Compiled module files
+*.mod
+*.smod
+
+# Compiled object files
+obj/*
+*.slo
+*.lo
+*.o
+*.obj
+
+# Compiled static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Compiler log
+comp.log
+
+# Julia & Python
+*.jl.cov
+*.jl.*.cov
+*.jl.mem
+.ipynb_checkpoints
+__pycache__
+
+# Precompiled headers
+*.gch
+*.pch
+
+# Prerequisites
+*.d
+
+# Tempory files of manual user backup
+*.orig
+*.bck
+runtime_env
+
+# Tempory files of editors 
+*~
+*\#
+etags
+
+# .directory
+*.directory
+
+# User folder
+.helper/
+usr/*/*/reporting.f90
+usr/stein/*
+usr/mlemke/*
+usr/hoelter/*
+usr/todo/*
+usr/schubert/*
+usr/westphal/*
+
+# internal docs
+docs/intern
+
+# external libraries
+ext/matlab
+ext/*tar.gz
+
+# non-public src/
+src/geometry/stl.f90
+src/equations/euler_rho_rhou_p_ev_phi.f90
+src/io/tub*.f90
+
+# ah
+src/cdps/cdps.f90
+src/math/specfun.f90
+usr/unit_test/cdps*
+src/equations/euler_linear_rho_u_p.f90
+src/equations/euler_linear_rho_u_p_trafos.f90
+src/main/cruna_cdps.f90
+
+# ys
+src/equations/ns_*
+src/equations/*grid_transform*
+usr/unit_test/*grid_transform*
+usr/unit_test/resistivity/*

@@ -1,0 +1,15 @@
+###########################################
+# THIS MAKEFILE CREATES THE comp.log FILE #
+###########################################
+complog:
+	echo "cruna_host  = \"$(HOSTNAME)\"" > comp.log
+	echo "cruna_case  = \"$(USER)/$(CASE)\"" >> comp.log
+	echo "cruna_comp  = \"$(COMP)\"" >> comp.log
+	echo "cruna_copt  = \"$(COPT)\"" >> comp.log
+	echo "cruna_lcopt = \"$(LCOPT)\"" >> comp.log
+	echo "cruna_lopt  = \"$(LOPT)\"" >> comp.log
+	echo "cruna_lopt  = \"$(LLOPT)\"" >> comp.log
+	echo "cruna_path  = \"$(PATH)\"" >> comp.log
+	echo "cruna_root  = \"$(CRUNA_ROOT)\"" >> comp.log
+	echo "cruna_user  = \"$(IAM)\"" >> comp.log
+	echo "cruna_time  = \"$(CTIME)\"" >> comp.log

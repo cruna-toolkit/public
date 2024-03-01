@@ -1,0 +1,16 @@
+################################################
+# THIS MAKEFILE CREATES THE reporting.f90 FILE #
+################################################
+reporting:
+	echo "module reporting"	> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_case  = \"$(USER)/$(CASE)\"" >> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_comp  = \"$(COMP)\"" >> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_copt  = \"$(COPT)\"" >> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_ctar  = \"$(TAR)\"" >> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_host  = \"$(HOSTNAME)\"" >> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_lopt  = \"$(LOPT)\"" >> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_path  = \"$(PATH)\"" >> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_root  = \"$(CRUNA_ROOT)\"" >>	$(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_user  = \"$(IAM)\"" >> $(CAS)/reporting.f90
+	echo "  character(len=*),parameter,public :: cruna_report_time  = \"$(CTIME)\"" >> $(CAS)/reporting.f90
+	echo "end module reporting" >> $(CAS)/reporting.f90

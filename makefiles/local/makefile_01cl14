@@ -1,0 +1,38 @@
+#############################
+#                           #
+#  -- envirnoment info--    #
+#                           #
+#############################
+# to compile with gnu  , 'module load mpich3'
+# to compile with intel, ask LO, icc not installed
+
+#############################
+#                           #
+#   -- Compiler 64bit --    #
+#                           #
+#############################
+
+# set compiler gnu, set compiler flags for gnu
+ifeq ($(strip $(COMP)), gnu)
+ export FC = mpif90             # mpif90 as wrapper for gfortran
+ export CC = mpicc              # standard gcc, used for libaries
+ export CXX = mpicxx            # standard g++, used for libaries
+ LCOPT+=-fbacktrace		# backtrace, binary contains code lines, simplifies debug
+ LCOPT+=-ffree-form		# enforce free-form
+ LCOPT+=-ffree-line-length-none # free line length (more than 132)
+ LCOPT+=-fimplicit-none		# force implicit-none
+ LCOPT+=-Wall			# all warnings
+# LCOPT+=-fmax-errors=1          # compiler stops at 1st error (better readability of error messages)
+endif
+
+############################
+#                          #
+#   -- Linker 64bit --     #
+#                          #
+############################
+
+LLOPT+=-lhdf5_fortran -lhdf5_hl -lhdf5hl_fortran -lhdf5 -lz -ldl 	# includes hdf5 library (here, linking arguments do not depend on the selected compiler/linker)
+LLOPT+=-lfftw3                                                          # includes FFTW3 library
+LLOPT+=-lp3dfft                                                         # includes P3DFFT library
+LLOPT+=-lopenblas                                                       # includes openBLAS library using gfortran
+

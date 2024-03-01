@@ -1,0 +1,9 @@
+openBLAS_path = $(LIB)/OpenBLAS/
+
+.phony: openBLAS
+openBLAS:
+	$(warning Building OpenBlas generically. Please consider to adapt this build to your hardware specifics.)
+	@mkdir -p $(openBLAS_path)
+	@cd $(EXT); tar xfv OpenBLAS-0.3.14.tar.gz -C $(openBLAS_path) --strip-components 1
+	@cd $(openBLAS_path); export USE_THREAD=0; make -j`nproc --all` #USE_OPENMP=1
+	@cd $(openBLAS_path); cp -fv libopenblas.a $(LIB)

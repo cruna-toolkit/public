@@ -1,0 +1,73 @@
+%% equation
+equation.nbr_vars = 5
+
+%% geometry
+% geom.n1 = 256 %64
+% geom.n2 = 256 %64
+% geom.n3 = 256 %64
+% geom.n1 = 128
+% geom.n2 = 64
+% geom.n3 = 32
+% geom.n1 = 4
+% geom.n2 = 8
+% geom.n3 = 16
+geom.n1 = 64
+geom.n2 = 64
+geom.n3 = 64
+
+% geom.x11 = 255 %63
+% geom.x21 = 255 %63
+% geom.x31 = 255 %63
+% geom.x11 = 127
+% geom.x21 = 63
+% geom.x31 = 31
+% geom.x11 = 1
+% geom.x21 = 1
+% geom.x31 = 1
+geom.x10 = 0
+geom.x20 = 0
+geom.x30 = 0
+geom.x11 = 63
+geom.x21 = 63
+geom.x31 = 63
+
+%% io
+io.sfreq  = 1
+io.dsfreq = 1
+
+%% init
+init.rho = 1.204
+init.u1  = 0
+init.u2  = 0
+init.u3  = 0
+init.p   = 101325
+init.radius = 8
+init.center = 48; 16; 16
+%init.radius = 0.1
+%init.center = 0.25; 0.25; 0.25
+
+%% io
+io.verbosity     = 0
+io.sfreq         = 1   % screen freq.
+io.workdirectory = /home/stein/code/cru/cruna/bin
+
+%% material
+material.gamma = 1.4
+
+%% optimisation
+opt.maxloop = 1
+
+%% parallelism
+parallelism.i1 = 16
+parallelism.i2 = 1
+parallelism.i3 = 1
+parallelism.tnr_omp = 2
+
+%% time
+time.steps   = 100  % timesteps per set
+io.dsfreq    = 10  % x snapshot freq. within one set
+time.subsets = 1   % set
+% io.dfreq    = 1   % xt field freq. of all sets
+
+time.t  = 0
+time.dt = 1e-3

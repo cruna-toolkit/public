@@ -1,0 +1,19 @@
+#####################################################################
+# THIS MAKEFILE CREATES *.d FILES USED FOR THE COMPILATION OF CRUNA #
+# 2017-11-28 (ml)                                                   #
+#####################################################################
+
+ALLF90 =$(wildcard $(SRC)/*/*.f90)									# select all .f90-files in the cruna src folder
+ALLF90+=$(wildcard $(SRC)/*/*.F90)									# select all .F90-files in the cruna src folder
+ALLF90+=$(wildcard $(CAS)/*.f90)									# select all .f90-files in the cruna cas folder
+ALLF90+=$(wildcard $(CAS)/*.F90)									# select all .F90-files in the cruna cas folder
+
+dep:
+	@for fname in $(ALLF90)                      ; do						# loop of all files in ALLF90                   \
+	 basename1=`echo $${fname%.*}`               ;							# remove file extensions			\
+	 basename2=`basename $$basename1`            ;							# determine filenames, using basename    	\
+	 dfname=$(OBJ)/$$basename2.d                 ;							# set .d-file filename + path  			\
+	 echo $$basename2.o:|tr '\n' ' ' > $$dfname  ;							# write filename.o :				\
+	 grep -e "^[^!|^\'|^\"]*use[ ]" $$fname |awk '{print $$2".o"}'|tr '\n' ' ' >> $$dfname;		# add targets based on use statements 		\
+	 cat $$dfname; echo -e ''                    ;                                                  # echo the deps                                 \
+	done

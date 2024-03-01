@@ -1,0 +1,63 @@
+%% equation
+equation.nbr_vars = 5
+
+%% geometry
+geom.n1 = 101
+geom.n2 = 100
+geom.n3 = 099
+
+geom.x10 = 0
+geom.x20 = 0
+geom.x30 = 0
+geom.x11 = 1
+geom.x21 = 1
+geom.x31 = 1
+
+%% init
+init.rho = 1.205747605164515
+init.u1  = 0
+init.u2  = 0
+init.u3  = 0
+init.p   = 101325
+
+%% filter
+filter.di1freq = 1
+filter.di2freq = 1
+filter.di3freq = 1
+
+filter.ai1freq = 1
+filter.ai2freq = 1
+filter.ai3freq = 1
+
+%% boundaries
+bounds.boundary_conditions_file = all_non_reflecting.dat
+
+%sponge.length    = 0.3; 0.3; 0.3 
+%sponge.amplitude = 15000
+
+%% io
+io.dfreq  = 5
+io.afreq  = 5
+io.dsfreq = 25
+io.asfreq = 25
+
+io.verbosity     = 1
+io.sfreq         = 25 
+
+%% material
+material.gamma = 1.4
+
+%% optimisation
+opt.maxloop = 1 % 15
+
+%% parallelism
+parallelism.i1 = 4
+parallelism.i2 = 1
+parallelism.i3 = 1
+
+%% time
+time.steps   = 25 % 200 % timesteps per set
+time.subsets = 1    % set
+
+time.t  = 0
+time.dt = 2.08333333333333e-05 % 1/48000

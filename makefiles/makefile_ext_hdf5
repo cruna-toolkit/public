@@ -1,0 +1,14 @@
+HDF5_path = $(LIB)/hdf5/
+
+.phony: hdf5
+hdf5:
+	@echo "Building HDF5 generically. Please consider to adapt this build to your hardware specifics."
+	@mkdir -p $(HDF5_path)
+	@cd $(EXT); tar xfvz hdf5-1.12.0.tar.gz -C $(HDF5_path) --strip-components 1
+	@cd $(HDF5_path); export FCFLAGS=-O3; export H5_FCFLAGS=-O3; ./configure --disable-shared --enable-build-mode=production --enable-fortran --enable-fortran2003
+	@cd $(HDF5_path); make -j`nproc --all` 
+	@cd $(HDF5_path); cp -fv ./fortran/src/.libs/libhdf5_fortran.a $(LIB)
+	@cd $(HDF5_path); cp -fv ./hl/src/.libs/libhdf5_hl.a $(LIB)
+	@cd $(HDF5_path); cp -fv ./src/.libs/libhdf5.a $(LIB)
+	@cd $(HDF5_path); cp -fv ./hl/fortran/src/.libs/libhdf5hl_fortran.a $(LIB)
+	@cd $(HDF5_path); cp -fv ./fortran/src/*.mod $(LIB)

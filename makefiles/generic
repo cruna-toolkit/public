@@ -1,0 +1,50 @@
+#-*-Makefile-*-# <- defines highlighting of Emacs
+# 
+# This makefile contains all recommended gnu/intel compiler options for CRUNA
+# which are indendent of the machine specific architecture or software environment.
+# It should be universal for 7.*<gcc<13.* and 18.*<intel<22.* and possible beyond these versions.
+
+export COPT       			# compiler flags (aka FOPTS)	>>> used by makefile_cruna_objects
+export LOPT      			# linker flags (aka LDOPTS)	>>> used by main makefile
+
+ifeq (intel, $(strip $(COMP)))
+
+     # parallelization
+     #COPT+=-fopenmp			# enable openMP
+
+     # sourcecode style
+     COPT+=-implicitnone#		# no implicit variable declaration
+
+     # optimization
+     COPT+=-O3#				# optimization level (ironically O2 can slow down execution)
+     # COPT+=-xHost#			# native optimization flags for present hardware, extension not always available
+     # COPT+=-fp-model=fast		# default anyway: faster, more rounding, less reproducable, IEEE violation
+     COPT+=-heap-arrays#		# use heap instead of stack for temporary arrays
+endif
+
+ifeq (gnu, $(strip $(COMP)))
+
+     # parallelization
+     #COPT+=-fopenmp			# enable openMP
+
+     # sourcecode style
+     COPT+=-ffree-form#			# enforce free-form
+     COPT+=-ffree-line-length-none# 	# free line length (more than 132)
+     COPT+=-fimplicit-none#		# no implicit variable declaration
+
+     # optimization
+     COPT+=-O2#				# optimization level
+     COPT+=-march=native#		# typical optimization flags for present hardware,
+# see: gfortran -march=native -E -v - </dev/null 2>&1 | grep cc1
+     #COPT+=-funroll-loops		# expert option: enforce enrolling, slow for long loops
+     #COPT+=-ffast-math#		# wrapper (comparable to ICCs "fp-model fast") incl. all the following:
+     COPT+=-ftree-vectorize#		# GCC auto-vectorization (default if O3)
+     COPT+=-frepack-arrays#		# repack data into contiguous block @runtime
+     COPT+=-fno-math-errno#		# skip error number generation (used by POSIX) for math library functions (IEEE violation)
+     COPT+=-funsafe-math-optimizations# # no accuracy guaranty: use associative/commutative properties, ignore zero sign (IEEE violation)
+     #COPT+=-ffinite-math-only		# BAD: NaNs, +-Infs undetected (IEEE violation)
+     COPT+=-fno-rounding-math#		# round-to-0 (integer conversion), round-to-nearest (other truncations), no full NaN, Inf support (IEEE violation)
+     #COPT+=-fno-signaling-nans		# BAD: 0/0, sqtr(negative-number) undetected (IEEE violation)
+     COPT+=-fcx-limited-range#		# complex division without range reduction (IEEE violation)
+     COPT+=-fexcess-precision=fast#	# default anyway - if faster more precision than IEEE definition is used (IEEE violation)
+endif

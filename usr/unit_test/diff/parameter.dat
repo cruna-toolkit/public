@@ -1,0 +1,47 @@
+%% equation
+equation.nbr_vars = 5
+
+%% geometry
+%geom.n1 = 256
+%geom.n2 = 256
+%geom.n3 = 256
+
+geom.n1 = 256
+geom.n2 = 256
+geom.n3 = 256	
+
+geom.x10 = 0.0
+geom.x11 = 1.0 % 5.89048622548 % 15/16*2*pi
+geom.x20 = 0.0
+geom.x21 = 1.0 % 5.89048622548 % 6.28318530718
+geom.x30 = 0.0
+geom.x31 = 1.0 % 6.28318530718
+
+%% io
+io.sfreq  = 2
+io.dsfreq = 2
+
+%% init
+init.rho = 1.204
+init.u1  = 0
+init.u2  = 0
+init.u3  = 0
+init.p   = 101325
+
+%% material
+material.gamma = 1.4
+
+%% optimisation
+opt.maxloop = 1
+
+%% parallelism
+parallelism.i1 = 2
+parallelism.i2 = 1
+parallelism.i3 = 1
+
+%% time
+time.steps = 8
+time.subsets = 1
+
+time.t  = 0
+time.dt = 1e-3
