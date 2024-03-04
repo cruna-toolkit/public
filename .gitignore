@@ -89,8 +89,3 @@ src/equations/euler_linear_rho_u_p.f90
 src/equations/euler_linear_rho_u_p_trafos.f90
 src/main/cruna_cdps.f90
 
-# ys
-src/equations/ns_*
-src/equations/*grid_transform*
-usr/unit_test/*grid_transform*
-usr/unit_test/resistivity/*
