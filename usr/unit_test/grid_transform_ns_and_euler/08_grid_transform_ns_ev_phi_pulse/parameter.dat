@@ -1,0 +1,83 @@
+%% equation
+equation.nbr_vars = 5
+
+%% geometry
+geom.n1 = 60
+geom.n2 = 65
+geom.n3 = 70
+
+geom.x10 = 0
+geom.x20 = 0
+geom.x30 = 0
+geom.x11 = 6.283185307
+geom.x21 = 6.283185307
+geom.x31 = 6.283185307
+
+geom.grid_deformed = T
+geom.distort_alpha = 0.1 
+geom.grid_transform_type = cartesian_2_distorted_wave
+
+room.x10 = 0.0
+room.x20 = 0.0
+room.x30 = 0.0
+room.x11 = 1.0
+room.x21 = 1.0
+room.x31 = 1.0
+room.len = 1.75
+
+room.rot_angles = 0;0;0
+
+penalization.fwidth_dx = 1.75
+penalization.phi       = 1
+
+%% io
+io.dsfreq = 10
+
+%% init
+init.rho = 1.193847801511275
+init.u1  = 0
+init.u2  = 0
+init.u3  = 0
+init.p   = 101325
+init.fwhm   = 10
+init.center = 3.14; 3.14; 3.14
+
+%% filter (no filter)
+%filter.di1freq = 1
+%filter.di2freq = 1
+%filter.di3freq = 1
+
+%filter.ai1freq = 1
+%filter.ai2freq = 1
+%filter.ai3freq = 1
+
+%% boundaries
+bounds.boundary_conditions_file = ../usr/unit_test/grid_transform_ns_and_euler/08_grid_transform_ns_ev_phi_pulse/all_non_reflecting.dat
+
+sponge.length    = 0.1
+sponge.amplitude = 0 
+
+%% io
+io.sfreq         = 10
+io.workdirectory = ../usr/unit_test/grid_transform_ns_and_euler/08_grid_transform_ns_ev_phi_pulse/
+io.referencedirectory = ../usr/unit_test/grid_transform_ns_and_euler/reference_data/reference_data_grid_transform_pulse/
+
+%% material
+material.gamma = 1.4
+material.mu0   = 0 
+
+%% optimisation
+opt.maxloop = 1
+
+%% parallelism
+parallelism.i1 = 1 
+parallelism.i2 = 1
+parallelism.i3 = 1
+
+%% time
+time.steps   = 250 % timesteps per set
+time.subsets = 1   % set
+
+time.t  = 0
+time.dt = 5e-05      
+

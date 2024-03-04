@@ -1,0 +1,2 @@
+This unit test must be executed in cruna/bin/
+This ensures that all relative paths are set correctly.

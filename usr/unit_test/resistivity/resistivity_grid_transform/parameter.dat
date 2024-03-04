@@ -1,0 +1,84 @@
+%% equation
+equation.nbr_vars = 5
+
+%% geometry
+geom.n1 = 128
+geom.n2 = 32
+geom.n3 = 32 
+
+geom.x10 = 0
+geom.x20 = 0
+geom.x30 = 0
+geom.x11 = 0.50
+geom.x21 = 0.1250
+geom.x31 = 0.1250
+
+geom.grid_deformed  = T
+geom.distort_alpha  =  1.25
+geom.distort_delta  =  0
+geom.distort_sigma  =  1.75 
+geom.distort_x0     =  0.25    
+geom.distort_y0     =  0.0625
+geom.grid_transform_type = cartesian_2_distorted_local_refinement 
+
+penalization.phi       = 1.0
+
+geom.p_end    = 0.2792968750    % start porous material
+geom.p_start  = 0.2207031250    % end   porous material
+
+geom.fwidth_dx = 0.005 
+geom.darcy_amp = 14000
+
+geom.pos_data_inlet = 0.1811 % start of the porous material with offset of 10 dx
+geom.pos_data_outet = 0.3189 % end   of the porous material with offset of 10 dx
+
+%% io
+io.dsfreq = 5000
+
+%% init    
+init.rho = 1.204
+init.u1  = 0.2
+init.u2  = 0
+init.u3  = 0
+init.p   = 101325
+init.dp   = -164.06250   
+init.fwidth_dp = 0.005
+
+%% filter
+filter.di1freq = 1
+filter.di2freq = 1
+filter.di3freq = 1
+
+%filter.dwi1freq = 100
+%filter.dwi2freq = 100
+%filter.dwi3freq = 100
+
+%% boundaries
+bounds.boundary_conditions_file = ../usr/unit_test/resistivity/resistivity_grid_transform/inlet_outlet_non_reflecting.dat
+
+sponge.length    = 0.1 
+sponge.amplitude = 0   
+
+%% io
+io.sfreq         = 5 
+io.workdirectory = /work/schubert/cruna/porous_material_flow_resistivity/non_reflecting_hagen/
+
+%% material
+material.gamma = 1.4
+material.mu0   = 1.825e-5
+
+%% optimisation
+opt.maxloop = 1
+
+%% parallelism
+parallelism.i1 = 4 
+parallelism.i2 = 1
+parallelism.i3 = 1
+
+%% time
+time.steps   = 2000   % timesteps per set
+time.subsets = 1      % set
+
+time.t  = 0
+time.dt = 5e-6 
+
