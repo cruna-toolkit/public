@@ -156,7 +156,7 @@ clean:
 clean_all: clean
 	@rm -rf $(LIB)/*
 	@rm -rf $(OBJ)/*
-	@rmdir lib
+	@rm -rf lib
 
 # emacs tags
 .NOTPARALLEL: tags
@@ -169,7 +169,7 @@ tags:
 ####################################################################################################
 # external libaries
 ####################################################################################################
-lib: folders hdf5 fftw3 p3dfft openBLAS
+lib: folders hdf5 fftw3 openBLAS
 	@echo ""
 	@echo "========== "
 	@echo "MAKE LIB : "
@@ -181,12 +181,12 @@ hdf5:
 fftw3:
 	@$(MAKE) -f makefiles/makefile_ext_fftw3
 
-p3dfft:
-	@$(MAKE) -f makefiles/makefile_ext_p3dfft
-
 openBLAS:
 	@$(MAKE) -f makefiles/makefile_ext_openBLAS
 
 folders:
+	@mkdir -p bin
 	@mkdir -p lib
+	@mkdir -p obj
+	@ln -sf lib ./include
 
