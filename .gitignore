@@ -73,7 +73,6 @@ usr/westphal/*
 docs/intern
 
 # external libraries
-ext/matlab
 ext/*tar.gz
 
 # non-public src/
