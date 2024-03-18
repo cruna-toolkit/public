@@ -82,7 +82,7 @@ cruna_objects: complog reporting dep
 	@cd $(SRC) && $(MAKE) -j -f ../makefiles/makefile_cruna_objects $(MAKECMDGOALS)
 
 .PHONY: cruna
-cruna: complog reporting dep cruna_objects
+cruna: folders complog reporting dep cruna_objects
 	@echo ""
 	@echo "=========== "
 	@echo "LINK CRUNA: "
@@ -91,7 +91,7 @@ cruna: complog reporting dep cruna_objects
 	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
 	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
 
-.PHONY: cruna_hpc
+.PHONY: folders cruna_hpc
 cruna_hpc: complog reporting dep cruna_objects
 	@echo ""
 	@echo "=============== "
@@ -101,7 +101,7 @@ cruna_hpc: complog reporting dep cruna_objects
 	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
 	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
 
-.PHONY: cruna_cdps
+.PHONY: folders cruna_cdps
 cruna_cdps: complog reporting dep cruna_objects
 	@echo ""
 	@echo "================ "
@@ -156,7 +156,6 @@ clean:
 clean_all: clean
 	@rm -rf $(LIB)/*
 	@rm -rf $(OBJ)/*
-	@rm -rf lib
 
 # emacs tags
 .NOTPARALLEL: tags
