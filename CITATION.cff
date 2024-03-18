@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Lemke"
+  given-names: "Mathias"
+  orcid: "https://orcid.org/0000-0002-3909-3553"
+- family-names: "Stein"
+  given-names: "Lewin"
+  orcid: "https://orcid.org/0000-0002-4298-2001"
+- family-names: "Hölter"
+  given-names: "Arne"
+  orcid: "https://orcid.org/0009-0000-8322-8948"
+- family-names: "Schubert"
+  given-names: "Yannick"
+title: "cruna-toolkit"
+version: 0.1
+date-released: 2024-03-13
+url: "https://github.com/cruna-toolkit"
