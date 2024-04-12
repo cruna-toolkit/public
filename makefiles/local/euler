@@ -3,8 +3,20 @@
 #  -- envirnoment info--    #
 #                           #
 #############################
+
 # to compile with gnu  , 'module load mpich3'
 # to compile with intel, ask LO, icc not installed
+
+#############################
+#                           #
+#    -- export stuff --     #
+#                           #
+#############################
+
+export LCDIR+=$(LIB)
+export LLDIR+=$(LIB)
+export LLOPT
+export LCOPT
 
 #############################
 #                           #

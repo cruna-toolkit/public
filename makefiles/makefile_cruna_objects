@@ -62,14 +62,14 @@ include $(DEPS:.o=.d)
 # compile
 ifeq ($(strip $(COMP)), gnu)
 %.o: %.f90 
-	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) $(LIB) -J$(OBJ)
+	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) -I$(LCDIR) -J$(OBJ)
 %.o: %.F90
-	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) $(LIB) -J$(OBJ)
+	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) -I$(LCDIR) -J$(OBJ)
 endif
 
 ifeq ($(strip $(COMP)), intel)
 %.o: %.f90 
-	 $(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) $(LIB) -module $(OBJ)
+	 $(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) -I$(LCDIR) -module $(OBJ)
 %.o: %.F90
-	 $(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) $(LIB) -module $(OBJ)
+	 $(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) -I$(LCDIR) -module $(OBJ)
 endif
