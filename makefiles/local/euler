@@ -13,8 +13,8 @@
 #                           #
 #############################
 
-export LCDIR+=$(LIB)
-export LLDIR+=$(LIB)
+export LCDIR+=-I$(LIB)
+export LLDIR+=-L$(LIB)
 export LLOPT
 export LCOPT
 

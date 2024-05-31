@@ -26,10 +26,10 @@ ifeq (gnu, $(strip $(COMP)))
      export FC = mpifort#       # MPI wrapper for Fortran
      export CC = gcc#           # for C libaries
 
-     # inactive (march=native is sufficient)
-     #LCOPT+=-march=core-avx2
-     #LCOPT+=-march=cascadelake
-     #LCOPT+=-skylake-avx512
+     # inactive: (march=native in generic makefile is sufficient)
+     ### LCOPT+=-march=core-avx2
+     ### LCOPT+=-march=cascadelake
+     ### LCOPT+=-skylake-avx512
 endif
 
 #############################
@@ -53,7 +53,7 @@ ifeq (intel, $(strip $(COMP)))
      #LCDIR+=-I$(MKLROOT)/include/fftw
      #LCOPT+=-lfftw3
 
-     # FFTW3 based on self build
+     # FFTW3 based on self build (usually not needed, since part of MKL)
      LCDIR+=-I$(CRUNA_ROOT)/lib
      LLDIR+=-L$(CRUNA_ROOT)/lib
      LLOPT+=-lfftw3	
@@ -65,8 +65,7 @@ ifeq (gnu, $(strip $(COMP)))
      #ifeq ($(OPENBLAS_DIR),)
      #     $(error The variable "OPENBLAS_DIR" is empty. Please load: openblas/gcc.9/0.3.7)
      #endif
-     #LLDIR+=-L$(OPENBLAS_DIR)/lib
-     #LLDIR+=-Wl,-rpath=$(OPENBLAS_DIR)/lib
+     #LLDIR+=-L$(OPENBLAS_DIR)/lib -Wl,-rpath=$(OPENBLAS_DIR)/lib
      #LLOPT+=-lopenblas
 
      # openBlas (static) based on self build
@@ -88,23 +87,24 @@ ifeq (gnu, $(strip $(COMP)))
      LLOPT+=-lfftw3
 endif
 
-# HDF5 (dynamic or static, parallel) from module/env. {recommended} for (HDF5 1.14.2 and Intel 2021.2)
+# HDF5 (dynamic, parallel) from module/env. {recommended} tested with (HDF5 1.10.5 and Intel 2021.2 or Intel 18.0.6) or (HDF5 1.10.6 and GCC 9.3.0)
 #ifeq ($(HDF5_ROOT),)
-#     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel/impi.21/intel.22/1.14.2 if intel/2021)
-#endif
-##LCDIR+=-I$(HDF5_ROOT)/include -I$(HDF5_ROOT)/mod/shared
-#LCDIR+=-I$(HDF5_ROOT)/include -I$(HDF5_ROOT)/mod/static
-#LLDIR+=-L$(HDF5_ROOT)/lib
-#LLDIR+=-Wl,-rpath=$(HDF5_ROOT)/lib#	# burns lib in, alternatively export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HDF5_ROOT/lib
-#LLOPT+=-lhdf5_fortran -lhdf5_f90cstub -lhdf5 -lz -ldl
-
-# HDF5 (dynamic, parallel) from module/env. {recommended} tested with (HDF5 1.10.5 and Intel 18.0.6) or (HDF5 1.10.6 and GCC 9.3.0)
-#ifeq ($(HDF5_ROOT),)
-#     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel/impi/intel/1.10.5 if intel.18, or hdf5-parallel/ompi/gcc.9/1.10.6 if gcc.9)
+#     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel/impi/intel/1.10.5 if intel, or hdf5-parallel/ompi/gcc.9/1.10.6 if gcc)
 #endif
 #LCDIR+=-I$(HDF5_ROOT)/include
+#LLDIR+=-L$(HDF5_ROOT)/lib -Wl,-rpath=$(HDF5_ROOT)/lib
+#LLOPT+=-lhdf5_fortran -lhdf5 -lz -ldl
+
+# HDF5 (dynamic or static, parallel) from module/env. for (HDF5 1.14.2 and Intel 2021.2)
+#ifeq ($(HDF5_ROOT),)
+#     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel/impi.21/intel.22/1.14.2 (requires intel 2021 or newer))
+#endif
+#LCDIR+=-I$(HDF5_ROOT)/include -I$(HDF5_ROOT)/mod/shared
+###LCDIR+=-I$(HDF5_ROOT)/include -I$(HDF5_ROOT)/mod/static
 #LLDIR+=-L$(HDF5_ROOT)/lib
-#LLDIR+=-Wl,-rpath=$(HDF5_ROOT)/lib
+#LLDIR+=-Wl,-rpath=$(HDF5_ROOT)/lib#	# burns lib in, alternatively export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HDF5_ROOT/lib
+###LLOPT+=-lhdf5_fortran -lhdf5_hl_f90cstub -lhdf5_hl -lhdf5_hl_fortran -lhdf5_f90cstub -lhdf5 -lz -ldl
+###LLOPT+=-lhdf5_fortran -lhdf5_f90cstub -lhdf5 -lz -ldl
 #LLOPT+=-lhdf5_fortran -lhdf5 -lz -ldl
 
 # HDF5 (static, serial) based on self build
@@ -112,5 +112,5 @@ endif
 #LLDIR+=-L$(CRUNA_ROOT)/lib
 LLOPT+=-lhdf5_fortran -lhdf5_hl -lhdf5hl_fortran -lhdf5 -lz -ldl
 
-#LLOPT+=$(CRUNA_ROOT)/lib/libhdf5_fortran.a $(CRUNA_ROOT)/lib/libhdf5_hl.a $(CRUNA_ROOT)/lib/libhdf5hl_fortran.a $(CRUNA_ROOT)/lib/libhdf5.a -lz -ldl
+###LLOPT+=$(CRUNA_ROOT)/lib/libhdf5_fortran.a $(CRUNA_ROOT)/lib/libhdf5_hl.a $(CRUNA_ROOT)/lib/libhdf5hl_fortran.a $(CRUNA_ROOT)/lib/libhdf5.a -lz -ldl
 

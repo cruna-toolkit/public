@@ -88,8 +88,8 @@ cruna: complog reporting dep cruna_objects
 	@echo "LINK CRUNA: "
 	@echo "=========== "
 #       link objects (*.o) and libs (see local makefile)
-	@echo         $(FC) *.o -L$(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
-	@cd $(OBJ) && $(FC) *.o -L$(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
+	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
+	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
 
 .PHONY: folders cruna_hpc
 cruna_hpc: complog reporting dep cruna_objects
@@ -98,8 +98,8 @@ cruna_hpc: complog reporting dep cruna_objects
 	@echo "LINK CRUNA_HPC: "
 	@echo "=============== "
 #       link objects (*.o) and libs (see local makefile)
-	@echo         $(FC) *.o -L$(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
-	@cd $(OBJ) && $(FC) *.o -L$(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
+	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
+	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
 
 .PHONY: folders cruna_cdps
 cruna_cdps: complog reporting dep cruna_objects
@@ -108,8 +108,8 @@ cruna_cdps: complog reporting dep cruna_objects
 	@echo "LINK CRUNA_CDPS: "
 	@echo "================ "
 #       link objects (*.o) and libs (see local makefile)
-	@echo         $(FC) *.o -L$(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps
-	@cd $(OBJ) && $(FC) *.o -L$(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps	
+	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps
+	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps	
 
 ####################################################################################################
 # HELPER

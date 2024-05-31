@@ -26,7 +26,7 @@ ifeq (gnu, $(strip $(COMP)))
      export FC = mpifort#       # MPI wrapper for Fortran
      export CC = gcc#           # for C libaries
 
-     # inactive: (march=native is sufficient)
+     # inactive: (march=native in generic makefile is sufficient)
      ### LCOPT+=-march=core-avx2
      ### LCOPT+=-march=cascadelake
      ### LCOPT+=-skylake-avx512
@@ -53,7 +53,7 @@ ifeq (intel, $(strip $(COMP)))
      LCDIR+=-I$(MKLROOT)/include/fftw
      LCOPT+=-lfftw3
 
-     # FFTW3 based on self build
+     # FFTW3 based on self build (usually not needed, since part of MKL)
      #LCDIR+=-I$(CRUNA_ROOT)/lib
      #LLDIR+=-L$(CRUNA_ROOT)/lib
      #LLOPT+=-lfftw3	

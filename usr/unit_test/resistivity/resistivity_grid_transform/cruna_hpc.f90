@@ -38,16 +38,17 @@ program cruna_hpc
   integer                                            :: nt
   integer                                            :: s
   integer                                            :: fi1freq ,fi2freq ,fi3freq
-  integer                                            :: fwi1freq,fwi2freq,fwi3freq
+  integer                                            :: fwi1freq,fwi2freq,fwi3freq  
+  
   real(kind=rk)                                      :: u, dp, chi, resistivity, length_porous
   real(kind=rk)                                      :: p_inlet, p_outlet ! data position (with offset)
   real(kind=rk)                                      :: p_start, p_end    ! actual position of porous material
   real(kind=rk), dimension(3)                        :: inlet_pos, outlet_pos
   integer, dimension(3), save                        :: inlet_idx  = (/0.0_rk,0.0_rk,0.0_rk/)
   integer, dimension(3), save                        :: outlet_idx = (/0.0_rk,0.0_rk,0.0_rk/)
-  real(kind=rk), dimension(:,:,:), allocatable       :: distance
-  integer                                            :: image_inlet  = 0.0_rk
-  integer                                            :: image_outlet  = 0.0_rk
+  real(kind=rk), dimension(:,:,:), allocatable       :: distance                                                                                    
+  integer                                            :: image_inlet  = 0.0_rk 
+  integer                                            :: image_outlet  = 0.0_rk 
   real(kind=rk)                                      :: val    = 0.0_rk
   real(kind=rk)                                      :: x21, x31
   real(kind=rk)                                      :: pos_data_inlet, pos_data_outlet
@@ -62,10 +63,10 @@ program cruna_hpc
 
 !!! TOPOLOGY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   call init_topology                      ! initializes mpi topologies
-
+ 
 !!! ALLOCATES & GEOMETRY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   call allocate_geometry                  ! allocates the memory in data_geom
-  call init_geometry                      ! init the geometry
+  call init_geometry                      ! init the geometry  
 
   call allocate_force                     ! allocates  force f (optimization stuff)
   call init_force                         ! initialize force f (optimization stuff)
@@ -84,7 +85,7 @@ program cruna_hpc
 
 !!! INIT & CHECK
   call init_direct(q0)
-  call init_reference(q0)
+  call init_reference(q0)    
   call init_filter_weighted(q0)
 
   ! store initial condition
@@ -187,29 +188,29 @@ program cruna_hpc
      end do
 
   end do
-
-  !!! define inlet and outlet position (before and after the porous material)
+  
+  !!! define inlet and outlet position (before and after the porous material) 
  call get_parameter(x21,'geom.x21')
  call get_parameter(x31,'geom.x31')
  call get_parameter(pos_data_inlet, 'geom.pos_data_inlet')
  call get_parameter(pos_data_outlet,'geom.pos_data_outet')
- allocate(distance(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+ allocate(distance(params%geom%n1b,params%geom%n2b,params%geom%n3b)) 
  inlet_pos(1) = pos_data_inlet
  inlet_pos(2) = x21/2
  inlet_pos(3) = x31/2
  outlet_pos(1) = pos_data_outlet
  outlet_pos(2) = x21/2
- outlet_pos(3) = x31/2
-
+ outlet_pos(3) = x31/2 
+ 
  ! get length porous material
  call get_parameter(p_start, 'geom.p_start')
  call get_parameter(p_end ,'geom.p_end ')
  length_porous = p_end - p_start
-
+ 
  ! get chi / analytical resistivtiy
- call get_parameter(chi,'geom.darcy_amp')
-
- !!! get core that contains the chosen grid point
+ call get_parameter(chi,'geom.darcy_amp') 
+ 
+ !!! get core that contains the chosen grid point  
  call calc_spatial_distance(distance,X,inlet_pos)
  call get_index(inlet_idx, image_inlet, val,distance,'min')
  call calc_spatial_distance(distance,X,outlet_pos)
@@ -218,35 +219,35 @@ program cruna_hpc
  ! get u
   u = 0.0_rk
  if (image_inlet.eq.params%parallelism%block_image) then
-    ! compute u at chosen point (indices have been determined in advance for grid: 128x32x32)
-        u  = qn(inlet_idx(1),inlet_idx(2),inlet_idx(3),2)/qn(inlet_idx(1),inlet_idx(2),inlet_idx(3),1)
- end if
+    ! compute u at chosen point (indices have been determined in advance for grid: 128x32x32)   
+        u  = qn(inlet_idx(1),inlet_idx(2),inlet_idx(3),2)/qn(inlet_idx(1),inlet_idx(2),inlet_idx(3),1) 
+ end if  
  call bcast(u, image_inlet-1, params%parallelism%block_comm)
-
+ 
  ! get p inlet
  p_inlet= 0.0_rk
  if (image_inlet.eq.params%parallelism%block_image) then
-    ! compute u at chosen point (indices have been determined in advance for grid: 128x32x32)
+    ! compute u at chosen point (indices have been determined in advance for grid: 128x32x32)   
         p_inlet  = qn(inlet_idx(1),inlet_idx(2),inlet_idx(3),5)
- end if
+ end if  
  call bcast(p_inlet, image_inlet-1, params%parallelism%block_comm)
-
-
+ 
+  
  ! get p outlet
  p_outlet= 0.0_rk
  if (image_outlet.eq.params%parallelism%block_image) then
-    ! compute u at chosen point (indices have been determined in advance for grid: 128x32x32)
+    ! compute u at chosen point (indices have been determined in advance for grid: 128x32x32)   
         p_outlet  = qn(outlet_idx(1),outlet_idx(2),outlet_idx(3),5)
- end if
+ end if  
  call bcast(p_outlet, image_outlet-1, params%parallelism%block_comm)
-
-
+ 
+ 
  ! compute dp
   dp = p_inlet - p_outlet
 
  !  compute resisitvity
- resistivity = dp/length_porous/u
-
+ resistivity = dp/length_porous/u 
+  
  if (params%parallelism%world_image.eq.1) then
     write(*,*) 'computed resisitvity : ',resistivity
     write(*,*) 'given resisitvity : ',chi
@@ -256,9 +257,9 @@ program cruna_hpc
     else
         write(*,*) 'Unit Test Resisitvity FAILED'
         stop
-    end if
- end if
-
+    end if  
+ end if   
+  
 
   ! clean
   deallocate(q1)

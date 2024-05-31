@@ -13,7 +13,7 @@ module parameter
 
   ! variables types
   integer, parameter, public       :: rk = selected_real_kind(15,307) ! double:(15,307); quad:(33, 4931) 
-  
+
 !!! parameter array & struct
   ! array
   character(len=max_length_parameter), dimension(max_nbr_parameters,5), save, public :: parameter_array
@@ -28,6 +28,10 @@ module parameter
      integer       :: n1 ,n2 ,n3
      integer       :: n1b,n2b,n3b
   end type geom
+
+  type init
+     real(kind=rk) :: rho,u1,u2,u3,p
+  end type init
 
   type io
      integer :: sfreq, afreq, dfreq, asfreq, dsfreq
@@ -57,6 +61,7 @@ module parameter
   type params_struct
      type(equation)    :: equation
      type(geom)        :: geom
+     type(init)        :: init
      type(io)          :: io
      type(material)    :: material
      type(parallelism) :: parallelism
@@ -131,6 +136,13 @@ contains
     call get_parameter(params%geom%dx1, "geom.dx1", default = 0.0_rk)
     call get_parameter(params%geom%dx2, "geom.dx2", default = 0.0_rk)
     call get_parameter(params%geom%dx3, "geom.dx3", default = 0.0_rk)
+
+    ! init
+    call get_parameter(params%init%rho , "init.rho" )
+    call get_parameter(params%init%p   , "init.p"   )
+    call get_parameter(params%init%u1  , "init.u1" , default = 0.0_rk )
+    call get_parameter(params%init%u2  , "init.u2" , default = 0.0_rk )
+    call get_parameter(params%init%u3  , "init.u3" , default = 0.0_rk )
 
     ! io
     call get_parameter(params%io%sfreq , "io.sfreq" , default = 1      )

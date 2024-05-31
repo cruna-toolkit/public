@@ -6,6 +6,7 @@ module boundary_conditions
   use parameter
   use wall_boundary_conditions
   use nonreflecting
+  use nonreflecting_lae
 
   private
 
@@ -53,6 +54,10 @@ contains
        case (201) 
           ! nonreflecting, characteristic decomposition, target values are initial conditions
           call characteristic_q(q(is:ie,js:je,ks:ke,:),q0(is:ie,js:je,ks:ke,:),boundary_conditions_array(i,8:10))
+
+       case (301)
+          ! nonreflecting for LAE, characteristic decomposition, target values are zero
+          call characteristic_q_lae(q(is:ie,js:je,ks:ke,:),q0(is:ie,js:je,ks:ke,:),boundary_conditions_array(i,8:10))
 
        case default
           write(*,*) "error in boundary_conditions.f90:set_boundary_condition_rhs:boundary type:",boundary_conditions_array(i,1)," not implemented @proc:",params%parallelism%world_image
@@ -103,6 +108,10 @@ contains
        case (201) 
           ! nonreflecting, characteristic decomposition, target values are initial conditions
           call characteristic_qs(qs(is:ie,js:je,ks:ke,:),q(is:ie,js:je,ks:ke,:),boundary_conditions_array(i,8:10))
+
+       case (301)
+          ! nonreflecting, characteristic decomposition, target values are initial conditions
+          call characteristic_qs_lae(qs(is:ie,js:je,ks:ke,:),q(is:ie,js:je,ks:ke,:),boundary_conditions_array(i,8:10))
 
        case default
           write(*,*) "error in boundary_conditions.f90:set_boundary_condition_rhs:boundary type:",boundary_conditions_array(i,1)," not implemented @proc:",params%parallelism%world_image
@@ -155,6 +164,9 @@ contains
 
        case (201)
           ! This is a "q" boundary condition only.
+       
+       case (301)
+          ! This is a "q" boundary condition only.
 
        case default
           write(*,*) "error in boundary_conditions.f90:set_boundary_condition_rhs:boundary type:",boundary_conditions_array(i,1)," not implemented @proc:",params%parallelism%world_image
@@ -204,6 +216,9 @@ contains
 
        case (201)
           ! This is a "qs" boundary condition only.
+      
+       case (301)
+          ! This is a "q" boundary condition only.
 
        case default
           write(*,*) "error in boundary_conditions.f90:set_boundary_condition_rhs:boundary type:",boundary_conditions_array(i,1)," not implemented @proc:",params%parallelism%world_image
