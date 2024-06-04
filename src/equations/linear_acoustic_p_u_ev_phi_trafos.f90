@@ -30,7 +30,7 @@ contains
        get_w_inv_r = .false.
     end if
 
-    T = W_INV_R*params%init%p/params%init%rho) 
+    T = W_INV_R*params%init%p/params%init%rho
     
   end function give_T
 !!!=================================================================================================
