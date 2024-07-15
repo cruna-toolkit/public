@@ -80,6 +80,14 @@ src/geometry/stl.f90
 src/equations/euler_rho_rhou_p_ev_phi.f90
 src/io/tub*.f90
 
+src/opt/force_adjoint_monopole_synthesis.f90
+src/opt/force_adjoint_sound_monopole_array.f90
+src/opt/force_adjoint_sound_monopole_grid_absunits.f90
+src/opt/force_adjoint_sound_monopole_grid_ballon.f90
+src/opt/force_adjoint_sound_monopole_grid.f90
+src/opt/force_adjoint_sound_symmetry_monopole_grid.f90
+src/opt/objective_adjoint_sound_monopole_array.f90
+
 # ah
 src/cdps/cdps.f90
 src/math/specfun.f90
