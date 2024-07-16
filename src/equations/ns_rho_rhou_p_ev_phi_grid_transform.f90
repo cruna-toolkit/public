@@ -179,19 +179,10 @@ contains
     tau_22 = mu_div + 2*mu*v_y
     tau_33 = mu_div + 2*mu*w_z
 
-    tau_12 = mu_div + mu*(u_y + v_x)
-    tau_13 = mu_div + mu*(u_z + w_x)
+    tau_12 = mu*(u_y + v_x)
+    tau_13 = mu*(u_z + w_x)
 
-    tau_23 = mu_div + mu*(v_z + w_y)
-    ! scale stresses with Jacobian
-    tau_11 = X_jacobian * tau_11
-    tau_22 = X_jacobian * tau_22
-    tau_33 = X_jacobian * tau_33
-
-    tau_12 = X_jacobian * tau_12
-    tau_13 = X_jacobian * tau_13
-
-    tau_23 = X_jacobian * tau_23
+    tau_23 = mu*(v_z + w_y)
 
     ! compute heat
     phi_lambda = give_lambda(mu) ! get lambda (only)
@@ -302,13 +293,13 @@ contains
 
     rhs(:,:,:,5) = rhs(:,:,:,5) + u(:,:,:,1)*p_x(:,:,:) + u(:,:,:,2)*p_y(:,:,:) + u(:,:,:,3)*p_z(:,:,:)
 
-    ! friction term: u_tilde
-    rhs(:,:,:,5) = rhs(:,:,:,5) + tau_11*u_x + tau_12*u_y + tau_13*u_z ! 11 12 13
-    rhs(:,:,:,5) = rhs(:,:,:,5) + tau_12*v_x + tau_22*v_y + tau_23*v_z ! 21 22 23
-    rhs(:,:,:,5) = rhs(:,:,:,5) + tau_13*w_x + tau_23*w_y + tau_33*w_z ! 31 32 33
+    ! friction term: u_tilde (accounting for Jacobian of stresses later of velocities)
+    rhs(:,:,:,5) = rhs(:,:,:,5) + X_jacobian * (tau_11*u_x + tau_12*u_y + tau_13*u_z) ! 11 12 13
+    rhs(:,:,:,5) = rhs(:,:,:,5) + X_jacobian * (tau_12*v_x + tau_22*v_y + tau_23*v_z) ! 21 22 23
+    rhs(:,:,:,5) = rhs(:,:,:,5) + X_jacobian * (tau_13*w_x + tau_23*w_y + tau_33*w_z) ! 31 32 33
 
     gamma_term   =  (params%material%gamma - 1.0_rk)          ! (gamma -1)
-    rhs(:,:,:,5) = X_jacobian * gamma_term * rhs(:,:,:,5)
+    rhs(:,:,:,5) = X_jacobian * gamma_term * rhs(:,:,:,5)     ! accounting for Jacobian of velocities
 
 !!! darcy
     call apply_volume_penalization(rhs,q)

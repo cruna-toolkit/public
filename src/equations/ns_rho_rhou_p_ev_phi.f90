@@ -141,10 +141,10 @@ contains
     tau_22 = mu_div + 2*mu*v_y
     tau_33 = mu_div + 2*mu*w_z
 
-    tau_12 = mu_div + mu*(u_y + v_x)
-    tau_13 = mu_div + mu*(u_z + w_x)
+    tau_12 = mu*(u_y + v_x)
+    tau_13 = mu*(u_z + w_x)
 
-    tau_23 = mu_div + mu*(v_z + w_y)
+    tau_23 = mu*(v_z + w_y)
 
     call Dx1(p_x,q(:,:,:,5),params%geom%dx1) ! dx p
     call Dx2(p_y,q(:,:,:,5),params%geom%dx2) ! dy p

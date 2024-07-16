@@ -122,10 +122,10 @@ contains
     tau_22 = mu_div + 2*mu*v_y
     tau_33 = mu_div + 2*mu*w_z
 
-    tau_12 = mu_div + mu*(u_y + v_x)
-    tau_13 = mu_div + mu*(u_z + w_x)
+    tau_12 = mu*(u_y + v_x)
+    tau_13 = mu*(u_z + w_x)
 
-    tau_23 = mu_div + mu*(v_z + w_y)
+    tau_23 = mu*(v_z + w_y)
 
 !!! mass equation --------------------------------------------------------------------------------
     call Dx1(a_x,q(:,:,:,2),params%geom%dx1)
