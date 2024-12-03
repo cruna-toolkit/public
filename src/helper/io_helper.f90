@@ -7,12 +7,13 @@ module io_helper
   private
 
   public get_fname
+  public inquire_file
 
   character(len=6), save :: fmt_loop        = '(I3.3)'
   character(len=6), save :: fmt_world_block = '(I2.2)'
   character(len=6), save :: fmt_block_image = '(I5.5)'
   character(len=6), save :: fmt_subset      = '(I2.2)'
-  character(len=6), save :: fmt_tstep       = '(I6.6)'
+  character(len=6), save :: fmt_tstep       = '(I7.7)'
 
 contains
 
@@ -55,15 +56,15 @@ contains
     ! select type
     !    defines the general file name and more ...
     select case (trim(type))
-    
-    
+
+
     case ("alpha_J_list")
        fn_general     = "alpha_J_list_"
        fn_block       = separator // trim(num2str(params%parallelism%world_block,fmt_world_block))
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
        ! subset   is empty 
        ! timestep is empty 
-       
+
     case ("ballon_grad_loop")
        call get_parameter(loop,'opt.loop')
        fn_general     = "ballon_grad_"
@@ -72,7 +73,7 @@ contains
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
        ! subset is empty since ballons live in frequency-domain (all freq.-components are written)
        ! timestep is empty since ballons live in frequency-domain (all freq.-components are written)       
-    
+
     case ("ballon_loop")
        call get_parameter(loop,'opt.loop')
        fn_general     = "ballon_"
@@ -81,7 +82,7 @@ contains
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
        ! subset is empty since ballons live in frequency-domain (all freq.-components are written)
        ! timestep is empty since ballons live in frequency-domain (all freq.-components are written)
-       
+
     case ("data_adjoint")
        fn_general     = "data_adjoint_"
        fn_block       = separator // trim(num2str(params%parallelism%world_block,fmt_world_block))
@@ -179,7 +180,7 @@ contains
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
        fn_subset      = separator // trim(num2str(subset                        ,fmt_subset     ))
        fn_timestep    = separator // trim(num2str(tstep                         ,fmt_tstep      ))
-       
+
     case ("drive_grad_loop")
        call get_parameter(loop,'opt.loop')
        fn_general     = "drive_grad_"
@@ -188,7 +189,7 @@ contains
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
        ! subset is empty since driving fct. is frequency dependent (all freq.-components are written)
        ! timestep is empty since driving fct. is frequency dependent    
-    
+
     case ("drive_loop")
        call get_parameter(loop,'opt.loop')
        fn_general     = "drive_"
@@ -235,7 +236,7 @@ contains
        ! subset   is empty as geometry is contant
        ! timestep is empty as geometry is contant
 
-     case ("geometry_calc_space")
+    case ("geometry_calc_space")
        fn_general     = "geometry_calc_space_"
        fn_block       = separator // trim(num2str(params%parallelism%world_block,fmt_world_block))
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
@@ -248,7 +249,7 @@ contains
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
        ! subset   is empty as geometry is contant
        ! timestep is empty as geometry is contant       
-      
+
     case ("geometry_jacobian")
        fn_general     = "geometry_jacobian_"
        fn_block       = separator // trim(num2str(params%parallelism%world_block,fmt_world_block))
@@ -299,11 +300,18 @@ contains
        ! block image is empty
        ! subset   is empty
        ! timestep is empty
-       
+
     case ("penalization")
        fn_general     = "penalization_"
        fn_block       = separator // trim(num2str(params%parallelism%world_block,fmt_world_block))
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
+       ! subset   is empty
+       ! timestep is empty as full subsets will be written        
+
+    case ("restartfile")
+       fn_general     = "restartfile"
+       ! fn_block       = separator // trim(num2str(params%parallelism%world_block,fmt_world_block))
+       ! fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
        ! subset   is empty
        ! timestep is empty as full subsets will be written        
 
@@ -313,7 +321,7 @@ contains
        fn_block_image = separator // trim(num2str(params%parallelism%block_image,fmt_block_image))
        ! subset   is empty as geometry is contant
        ! timestep is empty as geometry is contant
-       
+
     case ("sample_time")
        fn_general     = "sample_time_"
        fn_block       = separator // trim(num2str(params%parallelism%world_block,fmt_world_block))
@@ -387,5 +395,18 @@ contains
 
   end subroutine get_fname
 !!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine inquire_file(fname,file_exisit)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    character(len=*)               ,          intent(in)          :: fname
+    logical                        ,          intent(out)         :: file_exisit
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    inquire(file=trim(fname), exist=file_exisit )
+
+  end subroutine inquire_file
+!!!=================================================================================================
+
 
 end module io_helper

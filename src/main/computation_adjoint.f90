@@ -8,6 +8,7 @@ module computation_adjoint
   use io_wrapper
   use objective
   use parameter
+  use time_series
 
 contains
 
@@ -71,7 +72,7 @@ contains
           else
              q0 = Q(:,:,:,:,1)
           end if
-          
+
           call calc_objective_g(g,q0)
 
           call tic()
@@ -107,10 +108,14 @@ contains
              call store(qsn,'data_adjoint_snapshot')
           end if
 
+          ! time_series
+          call sample_adj(qsn)
+          call probe_adj(qsn)
+
           ! screen
           if(params%parallelism%world_image.eq.1) then
              if (mod(nt,params%io%sfreq).eq.0) then
-                write(*,*) "computation (adjoint) of timestep ", trim(num2str(params%time%nt,'(I6.6)'))," in sub-set ", trim(num2str(params%time%ns,'(I6.6)')), " T/nt: ", &
+                write(*,*) "computation (adjoint) of timestep ", trim(num2str(params%time%nt,'(I7.7)'))," in sub-set ", trim(num2str(params%time%ns,'(I7.7)')), " T/nt: ", &
                      trim(num2str(toc(),'(F0.3)'))," (",trim(num2str(toc_rhs,'(F0.3)')),")"
              end if
           end if
@@ -123,7 +128,7 @@ contains
                 write(*,*) " store data adjoint of subset", s
              end if
           end if
-          
+
           ! store adjoint subset data
           call store(Qs,'data_adjoint_subsets_cache')
        end if

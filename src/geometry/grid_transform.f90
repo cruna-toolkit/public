@@ -19,13 +19,13 @@ contains
 !!!=================================================================================================
   subroutine cartesian_2_cartesian_strech_shift(X,x10i,x20i,x30i)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk),dimension(:,:,:,:), intent(inout) :: X                                 ! local block grid   
+    real(kind=rk),dimension(:,:,:,:), intent(inout) :: X                                 ! local block grid
     integer                         , intent(in)    :: x10i,x20i,x30i                    ! start indices of imaginary block grid
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     real(kind=rk),dimension(:),allocatable          :: x1 , x2 , x3                      ! grid vectors for nd grid
     real(kind=rk)                                   :: x10, x20, x30                     ! global min
-    real(kind=rk)                                   :: x11, x21, x31                     ! global max 
-    real(kind=rk)                                   :: dx1, dx2, dx3                     ! dx 
+    real(kind=rk)                                   :: x11, x21, x31                     ! global max
+    real(kind=rk)                                   :: dx1, dx2, dx3                     ! dx
     integer                                         :: i
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! get physical block dimensions
@@ -78,7 +78,7 @@ contains
     if (params%geom%n1.gt.1) then                               ! check for collapsed (global) grid
        do i = 1,params%geom%n1b                                 ! loop over all grid points
           x1(i) = real(i - 1 + x10i - 1,rk) * dx1
-          !            ^----------^ global grid index        
+          !            ^----------^ global grid index
        end do
        ! else
        !    x1 = x10                                            ! use minimum value for collapsed grid
@@ -90,7 +90,7 @@ contains
     if (params%geom%n2.gt.1) then
        do i = 1,params%geom%n2b
           x2(i) = real(i - 1 + x20i - 1,rk) * dx2
-          !            ^----------^ global grid index   
+          !            ^----------^ global grid index
        end do
        ! else
        !    x2 = x20
@@ -102,7 +102,7 @@ contains
     if (params%geom%n3.gt.1) then
        do i = 1,params%geom%n3b
           x3(i) = real(i - 1 + x30i - 1,rk) * dx3
-          !            ^----------^ global grid index   
+          !            ^----------^ global grid index
        end do
        ! else
        !    x3 = x30
@@ -123,13 +123,13 @@ contains
 
 
 !!!=================================================================================================
-  subroutine distort_wave(X)   
-    ! a test grid which looks like a flag in wind, no deeper technical meaning 
+  subroutine distort_wave(X)
+    ! a test grid which looks like a flag in wind, no deeper technical meaning
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk),dimension(:,:,:,:), intent(inout) :: X                                 ! local block grid      
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!                      
-    real(kind=rk), dimension(:,:,:,:), allocatable  :: X_temp                            ! 
-    real(kind=rk)                                   :: alpha   
+    real(kind=rk),dimension(:,:,:,:), intent(inout) :: X                                 ! local block grid
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:,:), allocatable  :: X_temp                            !
+    real(kind=rk)                                   :: alpha
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     call get_parameter(alpha,'geom.distort_alpha')
@@ -137,27 +137,27 @@ contains
     allocate(X_temp(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
     X_temp     = X
     if (alpha.ne.0) then
-       X(:,:,:,1) = X_temp(:,:,:,1) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3))              ! here X_1 is overwritten 
-       X(:,:,:,2) = X_temp(:,:,:,2) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3))    
-       X(:,:,:,3) = X_temp(:,:,:,3) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3)) 
+       X(:,:,:,1) = X_temp(:,:,:,1) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3))
+       X(:,:,:,2) = X_temp(:,:,:,2) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3))
+       X(:,:,:,3) = X_temp(:,:,:,3) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3))
     end if
 
   end subroutine distort_wave
 !!!=================================================================================================
 
 !!!=================================================================================================
-  subroutine distort_local_refinement(X)   
+  subroutine distort_local_refinement(X)
     ! 2D refinement for bluff body simulations (can be adjusted for 3D)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk),dimension(:,:,:,:), intent(inout) :: X                                 ! local block grid                            ! 
+    real(kind=rk),dimension(:,:,:,:), intent(inout) :: X                                 ! local block grid                            !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk), dimension(:,:,:,:), allocatable  :: X_temp   
-    real(kind=rk)                                   :: alpha                     
-    real(kind=rk)                                   :: delta 
-    real(kind=rk)                                   :: sigma 
+    real(kind=rk), dimension(:,:,:,:), allocatable  :: X_temp
+    real(kind=rk)                                   :: alpha
+    real(kind=rk)                                   :: delta
+    real(kind=rk)                                   :: sigma
     real(kind=rk)                                   :: x0,y0
     real(kind=rk)                                   :: x10, x20, x30                     ! global min
-    real(kind=rk)                                   :: x11, x21, x31                     ! global max 
+    real(kind=rk)                                   :: x11, x21, x31                     ! global max
     real(kind=rk)                                   :: L1, L2, L3                        ! global length
     real(kind=rk)                                   :: x1_min, x2_min, x3_min            ! global new min
     real(kind=rk)                                   :: x1_max, x2_max, x3_max            ! global new max
@@ -190,9 +190,9 @@ contains
     call get_parameter(n3,'geom.n3',default = 1)
 
     ! compute physical (global) domain length
-    L1 = (x11-x10) 
-    L2 = (x21-x20) 
-    L3 = (x31-x30) 
+    L1 = (x11-x10)
+    L2 = (x21-x20)
+    L3 = (x31-x30)
 
     ! compute length correction
     X_temp(:,:,:,1) = X_temp(:,:,:,1) /  L1 * ( L1+ 2 * alpha) ! /Lxi   * (Lxi + 2*alpha)
@@ -213,21 +213,21 @@ contains
 
     ! correct for original block length (account for periodicity)
     if (trim(diff_i1_type).eq.'periodic') then
-       X(:,:,:,1) =  (X(:,:,:,1) - x1_min)/(x1_max - x1_min) * L1 * ((n1-1)/n1)   
+       X(:,:,:,1) =  (X(:,:,:,1) - x1_min)/(x1_max - x1_min) * L1 * ((n1-1)/n1)
     else
-       X(:,:,:,1) =  (X(:,:,:,1) - x1_min)/(x1_max - x1_min) * L1  
+       X(:,:,:,1) =  (X(:,:,:,1) - x1_min)/(x1_max - x1_min) * L1
     end if
 
     if (trim(diff_i2_type).eq.'periodic') then
-       X(:,:,:,2) =  (X(:,:,:,2) - x2_min)/(x2_max - x2_min) * L2 * ((n2-1)/n2)       
+       X(:,:,:,2) =  (X(:,:,:,2) - x2_min)/(x2_max - x2_min) * L2 * ((n2-1)/n2)
     else
-       X(:,:,:,2) =  (X(:,:,:,2) - x2_min)/(x2_max - x2_min) * L2 
+       X(:,:,:,2) =  (X(:,:,:,2) - x2_min)/(x2_max - x2_min) * L2
     end if
 
     !     if (trim(diff_i3_type).eq.'periodic') then
-    !        X(:,:,:,3) =  (X(:,:,:,3) - X(1,1,1,3))/(X(1,1,size(X,3),3) - X(1,1,1,3)) * (x31-x30) * ((size(X,3)-1)/size(X,3))        
+    !        X(:,:,:,3) =  (X(:,:,:,3) - X(1,1,1,3))/(X(1,1,size(X,3),3) - X(1,1,1,3)) * (x31-x30) * ((size(X,3)-1)/size(X,3))
     !     else
-    !        X(:,:,:,3) =  (X(:,:,:,3) - X(1,1,1,3))/(X(1,1,size(X,3),3) - X(1,1,1,3)) * (x31-x30) 
+    !        X(:,:,:,3) =  (X(:,:,:,3) - X(1,1,1,3))/(X(1,1,size(X,3),3) - X(1,1,1,3)) * (x31-x30)
     !     end if
 
   end subroutine distort_local_refinement
@@ -235,10 +235,10 @@ contains
 
 
 !!!=================================================================================================
-  subroutine distort_user_defined(X,x10i,x20i,x30i)   
+  subroutine distort_user_defined(X,x10i,x20i,x30i)
  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk), dimension(:,:,:,:), intent(inout) :: X                                 ! local block grid       
-    integer                         , intent(in)     :: x10i,x20i,x30i                    ! start indices of imaginary block grid! 
+    real(kind=rk), dimension(:,:,:,:), intent(inout) :: X                                 ! local block grid
+    integer                         , intent(in)     :: x10i,x20i,x30i                    ! start indices of imaginary block grid!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     real(kind=rk), dimension(:),allocatable          :: x1 , x2 , x3                      ! grid vectors for nd grid (local)
     real(kind=rk), dimension(:), allocatable         :: x_vec, y_vec, z_vec               ! grid vectors for nd grid (global)
@@ -251,49 +251,49 @@ contains
 
    ! add working path if present
     call get_parameter(data_directory,'geom.data_directory',default = ".")
-    data_directory = trim(data_directory) 
-    
-    
+    data_directory = trim(data_directory)
+
+
     call get_parameter(filename,'geom.filename',default = ".")
-    filename = trim(filename) 
-    
+    filename = trim(filename)
+
     ! first core read grid vector file and gets dimensions
-    filename = trim(data_directory)//trim(filename) 
+    filename = trim(data_directory)//trim(filename)
 !     if (params%parallelism%world_image.eq.image) write(*,*) 'filename new', filename
     if (params%parallelism%world_image.eq.image) then
        call get_dset_dim(dim_x_vec, 'dummy', fname_optin=  filename, dset_name_optin='x')
        call get_dset_dim(dim_y_vec, 'dummy', fname_optin=  filename, dset_name_optin='y')
        call get_dset_dim(dim_z_vec, 'dummy', fname_optin=  filename, dset_name_optin='z')
-    end if  
-    
+    end if
+
     ! broad cast dimensions and allocate memory
     call bcast(dim_x_vec,image-1 , params%parallelism%block_comm)
     call bcast(dim_y_vec,image-1 , params%parallelism%block_comm)
     call bcast(dim_z_vec,image-1 , params%parallelism%block_comm)
-    
+
     allocate(x_vec(dim_x_vec(1)))
     allocate(y_vec(dim_y_vec(1)))
     allocate(z_vec(dim_z_vec(1)))
-    
-    
+
+
     if (params%parallelism%world_image.eq.image) then
        call load(x_vec, 'dummy', fname_optin= filename,dset_name_optin='x')
        call load(y_vec, 'dummy', fname_optin= filename,dset_name_optin='y')
        call load(z_vec, 'dummy', fname_optin= filename,dset_name_optin='z')
     end if
-        
-    
+
+
     ! broad cast dimensions and allocate memory
     call bcast(x_vec,image-1 , params%parallelism%block_comm)
     call bcast(y_vec,image-1 , params%parallelism%block_comm)
     call bcast(z_vec,image-1 , params%parallelism%block_comm)
-    
-       
+
+
     ! allocate grid vectors
     allocate(x1(params%geom%n1b))
     allocate(x2(params%geom%n2b))
     allocate(x3(params%geom%n3b))
-   
+
     x1 = 0._rk
     x2 = 0._rk
     x3 = 0._rk
@@ -301,27 +301,27 @@ contains
 
     if (params%geom%n1.gt.1) then                               ! check for collapsed (global) grid
        do i = 1,params%geom%n1b                                 ! loop over all grid points
-          x1(i) = x_vec(i - 1 + x10i) 
-          !             ^----------^ global grid index      
+          x1(i) = x_vec(i - 1 + x10i)
+          !             ^----------^ global grid index
        end do
     end if
 
     if (params%geom%n2.gt.1) then
        do i = 1,params%geom%n2b
-          x2(i) = y_vec(i - 1 + x20i) 
-          !             ^----------^ global grid index   
+          x2(i) = y_vec(i - 1 + x20i)
+          !             ^----------^ global grid index
 
        end do
     end if
 
     if (params%geom%n3.gt.1) then
        do i = 1,params%geom%n3b
-          x3(i) = z_vec(i - 1 + x30i) 
-          !             ^----------^ global grid index  
+          x3(i) = z_vec(i - 1 + x30i)
+          !             ^----------^ global grid index
        end do
-    end if    
-    
-   
+    end if
+
+
     ! create the full grid
     call ndgrid(X,x1,x2,x3)
 

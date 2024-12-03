@@ -6,10 +6,10 @@ module parameter
 
 !!! general parameter
   ! parameter definitions
-  integer, parameter, public       :: max_length_parameter = 256
+  integer, parameter, public       :: max_length_parameter = 384
   integer, parameter, public       :: max_nbr_parameters   = 512
 
-  integer, parameter, public       :: max_length_fname     = 256
+  integer, parameter, public       :: max_length_fname     = 384
 
   ! variables types
   integer, parameter, public       :: rk = selected_real_kind(15,307) ! double:(15,307); quad:(33, 4931) 
@@ -34,7 +34,7 @@ module parameter
   end type init
 
   type io
-     integer :: sfreq, afreq, dfreq, asfreq, dsfreq
+     integer :: sfreq, afreq, dfreq, asfreq, dsfreq, gfreq, ffreq
      integer :: verbosity
   end type io
 
@@ -138,11 +138,11 @@ contains
     call get_parameter(params%geom%dx3, "geom.dx3", default = 0.0_rk)
 
     ! init
-    call get_parameter(params%init%rho , "init.rho" )
-    call get_parameter(params%init%p   , "init.p"   )
-    call get_parameter(params%init%u1  , "init.u1" , default = 0.0_rk )
-    call get_parameter(params%init%u2  , "init.u2" , default = 0.0_rk )
-    call get_parameter(params%init%u3  , "init.u3" , default = 0.0_rk )
+    call get_parameter(params%init%rho             , "init.rho"                                           )
+    call get_parameter(params%init%p               , "init.p"                                             )
+    call get_parameter(params%init%u1              , "init.u1"               , default = 0.0_rk           )
+    call get_parameter(params%init%u2              , "init.u2"               , default = 0.0_rk           )
+    call get_parameter(params%init%u3              , "init.u3"               , default = 0.0_rk           )
 
     ! io
     call get_parameter(params%io%sfreq , "io.sfreq" , default = 1      )
@@ -150,8 +150,8 @@ contains
     call get_parameter(params%io%asfreq, "io.asfreq", default = huge(1))
     call get_parameter(params%io%dfreq , "io.dfreq" , default = huge(1))
     call get_parameter(params%io%dsfreq, "io.dsfreq", default = huge(1))
-    call get_parameter(params%io%afreq , "io.ffreq" , default = huge(1))
-    call get_parameter(params%io%afreq , "io.gfreq" , default = huge(1))
+    call get_parameter(params%io%ffreq , "io.ffreq" , default = huge(1))
+    call get_parameter(params%io%gfreq , "io.gfreq" , default = huge(1))
 
     call get_parameter(params%io%verbosity, "io.verbosity", default = 0)
 

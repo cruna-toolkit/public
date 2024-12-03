@@ -14,22 +14,37 @@ ALLF90+=$(wildcard $(SRC)/*/*.F90)
 ifeq ($(MAKECMDGOALS), cruna)
 ALLF90:=$(filter-out $(CAS)/cruna_cdps.f90, $(ALLF90))
 ALLF90:=$(filter-out $(CAS)/cruna_hpc.f90, $(ALLF90))
+ALLF90:=$(filter-out $(CAS)/cruna_adj.f90, $(ALLF90))
 ALLF90:=$(filter-out $(SRC)/main/cruna_cdps.f90, $(ALLF90))
 ALLF90:=$(filter-out $(SRC)/main/cruna_hpc.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_adj.f90, $(ALLF90))
 endif
 
 ifeq ($(MAKECMDGOALS), cruna_hpc)
 ALLF90:=$(filter-out $(CAS)/cruna.f90, $(ALLF90))
 ALLF90:=$(filter-out $(CAS)/cruna_cdps.f90, $(ALLF90))
+ALLF90:=$(filter-out $(CAS)/cruna_adj.f90, $(ALLF90))
 ALLF90:=$(filter-out $(SRC)/main/cruna.f90, $(ALLF90))
 ALLF90:=$(filter-out $(SRC)/main/cruna_cdps.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_adj.f90, $(ALLF90))
 endif
 
 ifeq ($(MAKECMDGOALS), cruna_cdps)
 ALLF90:=$(filter-out $(CAS)/cruna.f90, $(ALLF90))
 ALLF90:=$(filter-out $(CAS)/cruna_hpc.f90, $(ALLF90))
+ALLF90:=$(filter-out $(CAS)/cruna_adj.f90, $(ALLF90))
 ALLF90:=$(filter-out $(SRC)/main/cruna.f90, $(ALLF90))
 ALLF90:=$(filter-out $(SRC)/main/cruna_hpc.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_adj.f90, $(ALLF90))
+endif
+
+ifeq ($(MAKECMDGOALS), cruna_adj)
+ALLF90:=$(filter-out $(CAS)/cruna_cdps.f90, $(ALLF90))
+ALLF90:=$(filter-out $(CAS)/cruna_hpc.f90, $(ALLF90))
+ALLF90:=$(filter-out $(CAS)/cruna.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_cdps.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna_hpc.f90, $(ALLF90))
+ALLF90:=$(filter-out $(SRC)/main/cruna.f90, $(ALLF90))
 endif
 ## filter-out mains (end)
 
@@ -39,20 +54,27 @@ DEPS=$(addprefix $(OBJ)/, $(OBJS))				# create dependencies (targets) from ALLF9
 .PHONY: cruna
 cruna: $(OBJS)
 	@echo ""
-	@echo "general compiler options: " $(COPT)
-	@echo "local   compiler options: " $(LCOPT)
+	@echo "general compiler options  (COPT): " $(COPT)
+	@echo "local   compiler options (LCOPT): " $(LCOPT)
 
 .PHONY: cruna_hpc
 cruna_hpc: $(OBJS)
 	@echo ""
-	@echo "general compiler options: " $(COPT)
-	@echo "local   compiler options: " $(LCOPT)
+	@echo "general compiler options (COPT): " $(COPT)
+	@echo "local  compiler options (LCOPT): " $(LCOPT)
 
 .PHONY: cruna_cdps
 cruna_cdps: $(OBJS)
 	@echo ""
-	@echo "general compiler options: " $(COPT)
-	@echo "local   compiler options: " $(LCOPT)
+	@echo "general compiler options (COPT): " $(COPT)
+	@echo "local  compiler options (LCOPT): " $(LCOPT)
+
+.PHONY: cruna_adj
+cruna_adj: $(OBJS)
+	@echo ""
+	@echo "general compiler options (COPT): " $(COPT)
+	@echo "local  compiler options (LCOPT): " $(LCOPT)
+
 
 #VPATH+=$(dir $(realpath $(ALLF90))):$(OBJ)			# blanks as seperator (might work only on unix systems)
 VPATH=$(dir $(realpath $(ALLF90))):$(OBJ)			# blanks as seperator (might work only on unix systems)
@@ -65,11 +87,20 @@ ifeq ($(strip $(COMP)), gnu)
 	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -J$(OBJ)
 %.o: %.F90
 	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -J$(OBJ)
-endif
 
-ifeq ($(strip $(COMP)), intel)
+else ifeq ($(strip $(COMP)), intel)
 %.o: %.f90 
 	 $(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -module $(OBJ)
 %.o: %.F90
 	 $(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -module $(OBJ)
+
+else ifeq ($(strip $(COMP)), aocc)
+%.o: %.f90 
+	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -module $(OBJ)
+%.o: %.F90
+	$(strip $(FC)) -c $(COPT) $(strip $(LCOPT)) $< -o $(OBJ)/$(notdir $(basename $<)).o  -I$(OBJ) $(LCDIR) -module $(OBJ)
+
+else
+$(error Command to compile cruna objects with $(COMP) not yet defined.)
+
 endif

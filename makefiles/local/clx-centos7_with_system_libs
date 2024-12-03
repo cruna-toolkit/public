@@ -16,7 +16,7 @@ export LLOPT       		# local linker library names (aka LDLIBS), eg -lfoo >>> use
 #############################
 
 ifeq (intel, $(strip $(COMP)))
-     export FC = mpifort#      # MPI wrapper for Fortran
+     export FC = mpiifort#      # MPI wrapper for Fortran
      export CC = icc#		# for C libaries (intel <= 2022)
      #export CC = icx#		# for C libaries (intel >= 2023)
 
@@ -89,7 +89,7 @@ endif
 
 # HDF5 (dynamic, parallel) from module/env. {recommended} tested with (HDF5 1.10.5 and Intel 2021.2 or Intel 18.0.6) or (HDF5 1.10.6 and GCC 9.3.0)
 ifeq ($(HDF5_ROOT),)
-     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel/impi/intel/1.10.5 if intel, or hdf5-parallel/ompi/gcc.9/1.10.6 if gcc)
+     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel/impi/intel if intel, or hdf5-parallel/ompi/gcc if gcc)
 endif
 LCDIR+=-I$(HDF5_ROOT)/include
 LLDIR+=-L$(HDF5_ROOT)/lib -Wl,-rpath=$(HDF5_ROOT)/lib

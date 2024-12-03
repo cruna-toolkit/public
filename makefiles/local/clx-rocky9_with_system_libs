@@ -16,7 +16,7 @@ export LLOPT       		# local linker library names (aka LDLIBS), eg -lfoo >>> use
 #############################
 
 ifeq (intel, $(strip $(COMP)))
-     export FC = mpifort#      # MPI wrapper for Fortran
+     export FC = mpiifort#      # MPI wrapper for Fortran
      export CC = icc#		# for C libaries (intel <= 2022)
      #export CC = icx#		# for C libaries (intel >= 2023)
 

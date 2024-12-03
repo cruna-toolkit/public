@@ -54,9 +54,9 @@ contains
     params%geom%n2b = params%geom%n2
     params%geom%n3b = params%geom%n3
 
-    call set_parameter(params%geom%n1,'params.geom.n1b')
-    call set_parameter(params%geom%n2,'params.geom.n2b')
-    call set_parameter(params%geom%n3,'params.geom.n3b')
+    call set_parameter(params%geom%n1,'geom.n1b')
+    call set_parameter(params%geom%n2,'geom.n2b')
+    call set_parameter(params%geom%n3,'geom.n3b')
 
   end subroutine init_topology
 !!!=================================================================================================

@@ -396,24 +396,27 @@ contains
 !!!=================================================================================================
   subroutine allreduce_rk(val_out, val_in, operation, comm)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk)   , intent(out)  :: val_out
-    real(kind=rk)   , intent(in)   :: val_in
-    character(len=*), intent(in)   :: operation
-    integer         , intent(in)   :: comm
+    real(kind=rk)   , intent(inout) :: val_out
+    real(kind=rk)   , intent(inout) :: val_in
+    character(len=*), intent(in)    :: operation
+    integer         , intent(in)    :: comm
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    integer                        :: ierr
+    real(kind=rk)                   :: val_in_buffer
+    integer                         :: ierr
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    val_in_buffer = val_in          ! to avoid aliasing of mpi_buffers
 
     select case (trim(adjustl(operation)))
 
     case ('max')
-       call mpi_allreduce(val_in,val_out,1,params%parallelism%mpi_type_rk,mpi_max,comm,ierr)
+       call mpi_allreduce(val_in_buffer,val_out,1,params%parallelism%mpi_type_rk,mpi_max,comm,ierr)
 
     case ('min')
-       call mpi_allreduce(val_in,val_out,1,params%parallelism%mpi_type_rk,mpi_min,comm,ierr)
+       call mpi_allreduce(val_in_buffer,val_out,1,params%parallelism%mpi_type_rk,mpi_min,comm,ierr)
 
     case ('sum')
-       call mpi_allreduce(val_in,val_out,1,params%parallelism%mpi_type_rk,mpi_sum,comm,ierr)
+       call mpi_allreduce(val_in_buffer,val_out,1,params%parallelism%mpi_type_rk,mpi_sum,comm,ierr)
 
     case default
        write(*,*) "error in mpi_cartesian.f90:allreduce_rk:unknown operation, stop" 
@@ -427,12 +430,12 @@ contains
 !!!=================================================================================================
   subroutine allreduce_rk_loc(val_out, val_in, operation, comm)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk)   , intent(out)  :: val_out(2)
-    real(kind=rk)   , intent(in)   :: val_in(2)
-    character(len=*), intent(in)   :: operation
-    integer         , intent(in)   :: comm
+    real(kind=rk)   , intent(out) :: val_out(2)
+    real(kind=rk)   , intent(in)  :: val_in(2)
+    character(len=*), intent(in)  :: operation
+    integer         , intent(in)  :: comm
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    integer                        :: ierr
+    integer                       :: ierr
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     select case (trim(adjustl(operation)))
@@ -458,24 +461,27 @@ contains
 !!!=================================================================================================
   subroutine allreduce_ik(val_out, val_in, operation, comm)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    integer         , intent(out)  :: val_out
-    integer         , intent(in)   :: val_in
-    character(len=*), intent(in)   :: operation
-    integer         , intent(in)   :: comm
+    integer         , intent(inout) :: val_out
+    integer         , intent(inout) :: val_in
+    character(len=*), intent(in)    :: operation
+    integer         , intent(in)    :: comm
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    integer                        :: ierr
+    integer                         :: val_in_buffer
+    integer                         :: ierr
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    val_in_buffer = val_in          ! to avoid aliasing of mpi_buffers
 
     select case (trim(adjustl(operation)))
 
     case ('max')
-       call mpi_allreduce(val_in,val_out,1,params%parallelism%mpi_type_ik,mpi_max,comm,ierr)
+       call mpi_allreduce(val_in_buffer,val_out,1,params%parallelism%mpi_type_ik,mpi_max,comm,ierr)
 
     case ('min')
-       call mpi_allreduce(val_in,val_out,1,params%parallelism%mpi_type_ik,mpi_min,comm,ierr)
+       call mpi_allreduce(val_in_buffer,val_out,1,params%parallelism%mpi_type_ik,mpi_min,comm,ierr)
 
     case ('sum')
-       call mpi_allreduce(val_in,val_out,1,params%parallelism%mpi_type_ik,mpi_sum,comm,ierr)
+       call mpi_allreduce(val_in_buffer,val_out,1,params%parallelism%mpi_type_ik,mpi_sum,comm,ierr)
 
     case default
        write(*,*) "error in mpi_cartesian.f90:allreduce_ik:unknown operation, stop" 

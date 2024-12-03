@@ -19,6 +19,7 @@ module hdf5_single
      module procedure load_3d_rk
      module procedure load_2d_rk
      module procedure load_1d_rk
+     module procedure load_1d_i
   end interface load
 
   interface load_sub
@@ -27,6 +28,7 @@ module hdf5_single
 
   interface store
      module procedure store_1d_rk
+     module procedure store_1d_i
      module procedure store_2d_rk
      module procedure store_3d_rk
      module procedure store_4d_i
@@ -167,6 +169,133 @@ contains
     call h5close_f(iostat)
 
   end subroutine store_1d_rk
+!!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine store_1d_i(data, type, fname_optin, nt_optin, ns_optin, dset_name_optin, file_overwrite_optin)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer         , dimension(:)      , intent(in)                     :: data
+    character(len=*),                     intent(in)                     :: type
+    character(len=*),                     intent(in), optional           :: fname_optin
+    integer         ,                     intent(in), optional           :: nt_optin
+    integer         ,                     intent(in), optional           :: ns_optin
+    character(len=*),                     intent(in), optional           :: dset_name_optin
+    logical         ,                     intent(in), optional           :: file_overwrite_optin
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer(hsize_t), dimension(:), allocatable                          :: dims
+    integer(hid_t)                                                       :: file_id, c_type, dset_id, dspace_id 
+    integer(size_t)                                                      :: s_dim 
+    integer                                                              :: iostat
+    logical                                                              :: file_exist, write_params = .true., file_overwrite = .false.
+
+    character(len=max_length_parameter*5), dimension(max_nbr_parameters) :: parameter_list
+    character(len=max_length_fname)                                      :: fname,dset_name
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ! handle optional arguments
+    if(present(fname_optin))then
+       ! use optional fname only
+       fname = trim(fname_optin)
+    else
+       if ((present(nt_optin)).and.(present(ns_optin))) then
+          ! construct fname using optional timestep and subset
+          call get_fname(fname,type,nt_optin,ns_optin)
+
+       else if (present(nt_optin)) then
+          ! construct fname using optional timestep
+          call get_fname(fname,type,nt = nt_optin)
+
+       else if (present(ns_optin)) then
+          ! construct fname using optional subset
+          call get_fname(fname,type,ns = ns_optin)
+
+       else           
+          ! construct fname (the default way for all io operations)
+          call get_fname(fname,type)
+
+       end if
+
+       ! add filename extension
+       fname = trim(trim(fname)//".h5") 
+    endif
+
+    if(present(file_overwrite_optin))then
+       file_overwrite = file_overwrite_optin
+    end if
+
+    ! open hdf5
+    call h5open_f(iostat)
+
+    if(present(dset_name_optin))then
+       dset_name = trim(dset_name_optin)
+
+       ! inquire file
+       inquire(file = trim(fname),exist = file_exist, iostat = iostat)
+
+       ! open exisiting file or create new one
+       if((file_exist.eqv..true.).and.(file_overwrite.eqv..false.)) then
+          call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
+          ! do not write params (again)
+          write_params = .false.
+       else
+          call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
+       end if
+    else ! the defaul way
+       ! default dset name = 'data'
+       dset_name = 'data'
+
+       ! create new h5 file, deletes ALL old stuff, fastest way of writing, the way to go!
+       ! params are written as write_params = .true. by default
+       call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
+    end if
+
+    ! - data - 
+
+    ! determine size
+    allocate(dims(1))
+    dims(1) = size(data,1)
+    ! create dataspace
+    call h5screate_simple_f(1, dims, dspace_id, iostat)
+    ! create dataset
+    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_double, dspace_id, dset_id, iostat)
+    ! write dataset
+    call h5dwrite_f(dset_id, h5t_native_double, data, dims, iostat)
+    ! close dataset and dataspace
+    call h5dclose_f(dset_id,iostat)
+    call h5sclose_f(dspace_id,iostat)
+    deallocate(dims)
+
+    ! - parameter - 
+    if(write_params.eqv..true.) then
+       ! convert parameter to char
+       call create_parameter_list(parameter_list)
+       ! determine sizes
+       s_dim = max_length_parameter*5 ! chars per row
+       allocate(dims(1))
+       dims  = max_nbr_parameters     ! row number
+       ! create datatype (for entire row)
+       call h5tcopy_f(h5t_fortran_s1,c_type,iostat)
+       call h5tset_size_f(c_type,s_dim,iostat)
+       ! create dataspace
+       call h5screate_simple_f(1,dims,dspace_id,iostat)
+       ! create dataset
+       call h5dcreate_f_error_control(file_id,"params",c_type,dspace_id,dset_id,iostat)
+       ! write dataset
+       call h5dwrite_f(dset_id,c_type,parameter_list,dims,iostat)
+       ! close datatype, dataset and dataspace
+       call h5tclose_f(c_type,iostat)
+       call h5dclose_f(dset_id,iostat)
+       call h5sclose_f(dspace_id,iostat)
+
+       deallocate(dims)
+    end if
+
+    ! close hdf5 file
+    call h5fclose_f(file_id, iostat)
+    ! close hdf5
+    call h5close_f(iostat)
+
+  end subroutine store_1d_i
 !!!=================================================================================================
 
 !!!=================================================================================================
@@ -1315,6 +1444,80 @@ contains
   end subroutine load_1d_rk
 !!!=================================================================================================
 
+!!!=================================================================================================
+  subroutine load_1d_i(data, type, fname_optin, nt_optin, ns_optin, dset_name_optin)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer         , dimension(:)        , intent(out)                  :: data
+    character(len=*),                       intent(in)                   :: type
+    character(len=*),                       intent(in), optional         :: fname_optin
+    integer         ,                       intent(in), optional         :: nt_optin
+    integer         ,                       intent(in), optional         :: ns_optin
+    character(len=*),                       intent(in), optional         :: dset_name_optin
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer(hsize_t), dimension(:), allocatable                          :: dims
+    integer(hid_t)                                                       :: file_id, dset_id
+    integer                                                              :: iostat
+    character(len=max_length_fname)                                      :: fname,dset_name
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ! handle optional arguments
+    if(present(fname_optin))then
+       ! use optional fname only
+       fname = trim(fname_optin)
+    else
+       if ((present(nt_optin)).and.(present(ns_optin))) then
+          ! construct fname using optional timestep and subset
+          call get_fname(fname,type,nt_optin,ns_optin)
+
+       else if (present(nt_optin)) then
+          ! construct fname using optional timestep
+          call get_fname(fname,type,nt = nt_optin)
+
+       else if (present(ns_optin)) then
+          ! construct fname using optional subset
+          call get_fname(fname,type,ns = ns_optin)
+
+       else           
+          ! construct fname (the default way for all io operations)
+          call get_fname(fname,type)
+
+       end if
+
+       ! add filename extension
+       fname = trim(trim(fname)//".h5")
+    endif
+
+    if(present(dset_name_optin))then
+       dset_name = trim(dset_name_optin)
+    else
+       dset_name = 'data'
+    end if
+
+    ! open hdf5
+    call h5open_f(iostat)
+
+    ! open hdf5 file
+    call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
+
+    ! - data - 
+    allocate(dims(1))
+    dims(1) = size(data,1)
+
+    call h5dopen_f_error_control(file_id, trim(dset_name), dset_id, iostat)
+    call h5dread_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dclose_f(dset_id,iostat)
+
+    deallocate(dims)
+
+    ! close hdf5 (file)
+    call h5fclose_f(file_id, iostat)
+    call h5close_f(iostat)
+
+  end subroutine load_1d_i
+!!!=================================================================================================
+
+
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! m i s c !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1382,7 +1585,7 @@ contains
 
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
-    
+
     ! get dims of data
     call h5dopen_f_error_control(file_id, dset_name, dset_id, iostat)
     call h5dget_space_f(dset_id, file_space, iostat)

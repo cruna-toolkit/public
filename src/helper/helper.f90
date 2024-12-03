@@ -392,7 +392,7 @@ contains
           !call execute_command_line(system_cmd,.false.,estat,cstat)
 
        else
-          write(*,*) "error in helper.f90:send_mail:no 'params.io.mail_recv' given"
+          write(*,*) "error in helper.f90:send_mail:no 'io.mail_recv' given"
        end if
     end if
 
@@ -431,7 +431,7 @@ contains
           !call execute_command_line(system_cmd,.false.,estat,cstat)
 
        else
-          write(*,*) "error in helper.f90:send_mail:no 'params.io.mail_recv' given"
+          write(*,*) "error in helper.f90:send_mail:no 'io.mail_recv' given"
        end if
     end if
 

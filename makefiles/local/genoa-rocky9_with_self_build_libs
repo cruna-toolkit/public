@@ -1,0 +1,132 @@
+#-*-Makefile-*-# <- for Emacs highlighting
+# 
+# This makefile is/must be adopted to your local system.
+# It should contain all machine specific hardware and
+# software environment dependent compiler/linker options.
+
+export LCDIR       		# local compiler library directories to include, eg -I/libpath/to/include >>> used by makefile_cruna_objects
+export LCOPT       		# local compiler flags and library names (aka FFLAGS) >>> used by makefile_cruna_objects
+export LLDIR			# local linker library directories (aka LDFLAGS), eg -L/libpath/to/lib >>> used by main makefile
+export LLOPT       		# local linker library names (aka LDLIBS), eg -lfoo >>> used by main makefile
+
+#############################
+#                           #
+#  -- envirnoment info --   #
+#                           #
+#############################
+
+ifeq (gnu, $(strip $(COMP)))
+     export FC = mpifort#       # MPI gfortran wrapper: see mpifort -show
+     export CC = gcc#           # for C libaries
+
+     # inactive: (march=native in generic makefile is sufficient)
+     ### LCOPT+=-march=core-avx2
+     ### LCOPT+=-march=cascadelake
+     ### LCOPT+=-skylake-avx512
+
+else ifeq (intel, $(strip $(COMP)))
+     export FC = mpiifort#      # MPI ifort wrapper: see mpiifort -show
+     export CC = icc#           # for C libaries (intel <= 2022)
+     #export CC = icx#          # for C libaries (intel >= 2023)
+
+     #LCOPT+=-xCORE-AVX512#	# slower compilation, faster execution
+else ifeq (aocc, $(strip $(COMP)))
+     export FC = mpifort#       # MPI flang wrapper: see mpifort -show
+     export CC = clang#         # for C libaries
+
+endif
+
+#############################
+#                           #
+#  -- Set external libs --  #
+#                           #
+#############################
+
+ifeq (gnu, $(strip $(COMP)))
+
+     # openBlas (dynamic) from module/env. {recommended}
+     ifeq ($(OPENBLAS_DIR),)
+          $(error The variable "OPENBLAS_DIR" is empty. Please load: openblas/gcc)
+     endif
+     LLDIR+=-L$(OPENBLAS_DIR)/lib -Wl,-rpath=$(OPENBLAS_DIR)/lib
+     LLOPT+=-lopenblas
+
+     # openBlas (static) based on self build
+     # $(error Stop no working makefile included for openBlas build with gnu/gcc.)
+     #LCDIR+=-I$(CRUNA_ROOT)/lib
+     #LLDIR+=-L$(CRUNA_ROOT)/lib
+     #LLOPT+=-lopenblas
+
+     # FFTW3 (dynamic) from module/env. {recommended}
+     #ifeq ($(FFTW3_ROOT),)
+     #     $(error The variable "FFTW3_ROOT" is empty. Please load: fftw3/ompi/gcc)
+     #endif
+     #LCDIR+=-I$(FFTW3_ROOT)/include
+     #LLDIR+=-Wl,-rpath=$(FFTW3_ROOT)/lib
+     #LLOPT+=-lfftw3
+
+     # FFTW3 (static) based on 3rd party "self build":
+     # make -j fftw3
+     LCDIR+=-I$(CRUNA_ROOT)/lib
+     LLDIR+=-L$(CRUNA_ROOT)/lib
+     LLOPT+=-lfftw3
+
+else ifeq (intel, $(strip $(COMP)))
+
+     ifeq ($(MKLROOT),)
+          $(error The variable "MKLROOT" is empty. Please load: module add intel)
+     endif
+
+     # MKL-BLAS from module/env. {recommended}
+     LLDIR+=-L$(MKLROOT)/lib/intel64_lin
+     LLOPT+=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
+     # For Intel MKL don’t link -lm explicitly.
+
+     # MKL-FFTW from module/env. {recommended}
+     #LCDIR+=-I$(MKLROOT)/include/fftw
+     #LCOPT+=-lfftw3
+
+     # FFTW3 based on self build (usually not needed, since part of MKL)
+     LCDIR+=-I$(CRUNA_ROOT)/lib
+     LLDIR+=-L$(CRUNA_ROOT)/lib
+     LLOPT+=-lfftw3
+
+else ifeq (aocc, $(strip $(COMP)))
+
+     # openBlas (dynamic) from module/env. {recommended}
+     #ifeq ($(OPENBLAS_DIR),)
+     #     $(error The variable "OPENBLAS_DIR" is empty. Please load: openblas/gcc)
+     #endif
+     #LLDIR+=-L$(OPENBLAS_DIR)/lib -Wl,-rpath=$(OPENBLAS_DIR)/lib
+     #LLOPT+=-lopenblas
+
+     # openBlas (static) based on self build
+     $(error Stop no working makefile included for openBlas build with aocc.)
+     LCDIR+=-I$(CRUNA_ROOT)/lib
+     LLDIR+=-L$(CRUNA_ROOT)/lib
+     LLOPT+=-lopenblas
+
+     # FFTW3 (static) based on 3rd party "self build":
+     # make -j fftw3
+     LCDIR+=-I$(CRUNA_ROOT)/lib
+     LLDIR+=-L$(CRUNA_ROOT)/lib
+     LLOPT+=-lfftw3
+
+endif
+
+# HDF5 (dynamic, parallel) from module/env. {recommended} tested with (HDF5 1.14.5, OpenBLAS 0.3.28, GCC 13.3.0) or (HDF5 1.14.5, AOCL 4.2.0, AOCC 4.2.0) on Genoa cluster
+ifeq ($(HDF5_ROOT),)
+     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel/gcc/1.14.5 if gcc, or hdf5-parallel/aocc/1.14.5 if aocc)
+endif
+LCDIR+=-I$(HDF5_ROOT)/include -I$(HDF5_ROOT)/mod/shared
+LLDIR+=-L$(HDF5_ROOT)/lib -Wl,-rpath=$(HDF5_ROOT)/lib
+LLOPT+=-lhdf5_fortran -lhdf5 -lz -ldl
+
+# HDF5 (static, serial) based on 3rd party "self build":
+# make -j hdf5
+#LCDIR+=-I$(CRUNA_ROOT)/lib
+#LLDIR+=-L$(CRUNA_ROOT)/lib
+#LLOPT+=-lhdf5_fortran -lhdf5_hl -lhdf5hl_fortran -lhdf5 -lz -ldl
+
+# Other old historic flags
+###LLOPT+=$(CRUNA_ROOT)/lib/libhdf5_fortran.a $(CRUNA_ROOT)/lib/libhdf5_hl.a $(CRUNA_ROOT)/lib/libhdf5hl_fortran.a $(CRUNA_ROOT)/lib/libhdf5.a -lz -ldl

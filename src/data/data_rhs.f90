@@ -18,7 +18,7 @@ contains
     logical :: const_direct = .false.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    call get_parameter(const_direct,'params.opt.const_direct',default = .false.)
+    call get_parameter(const_direct,'opt.const_direct',default = .false.)
     if(const_direct.eqv..true.) then
        allocate( Q(params%geom%n1b,params%geom%n2b,params%geom%n3b,params%equation%nbr_vars,                1))
     else

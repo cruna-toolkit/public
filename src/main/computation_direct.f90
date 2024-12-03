@@ -7,6 +7,7 @@ module computation_direct
   use io
   use io_wrapper
   use parameter
+  use time_series
   use boundary_conditions
 
 contains
@@ -41,7 +42,7 @@ contains
     qn           = q0
     Q(:,:,:,:,1) = q0 ! this sets Q=q0 in case of size(Q,5).eq.1 (linear adjoint)
 
-    call get_parameter(const_direct,'params.opt.const_direct',default = .false.)
+    call get_parameter(const_direct,'opt.const_direct',default = .false.)
     if(const_direct.eqv..true.) then
        if(params%parallelism%block_image.eq.1) then
           write(*,*) ""
@@ -112,10 +113,14 @@ contains
              call store(qn,'data_direct_snapshot')
           end if
 
+          ! time_series
+          call sample(qn)
+          call probe(qn)
+
           ! screen
           if(params%parallelism%world_image.eq.1) then
              if (mod(nt,params%io%sfreq).eq.0) then
-                write(*,*) "computation (direct) of timestep ", trim(num2str(params%time%nt,'(I6.6)'))," in sub-set ", trim(num2str(params%time%ns,'(I6.6)')), " T/nt: ",trim(num2str(toc(),'(F00.3)'))," (",trim(num2str(toc_rhs,'(F0.3)')),")"
+                write(*,*) "computation (direct) of timestep ", trim(num2str(params%time%nt,'(I7.7)'))," in sub-set ", trim(num2str(params%time%ns,'(I7.7)')), " T/nt: ",trim(num2str(toc(),'(F00.3)'))," (",trim(num2str(toc_rhs,'(F0.3)')),")"
              end if
           end if
 

@@ -10,7 +10,8 @@ module rhs_zero
 
   public give_T, give_c, give_r, give_u, give_p
 
-  character(len=max_length_parameter), parameter, public   :: viscosity = "none"
+  character(len=max_length_parameter), parameter, public   :: viscosity_type = "none"
+  character(len=max_length_parameter), parameter, public   :: equations_name = "rhs_zero"
 
 contains
 

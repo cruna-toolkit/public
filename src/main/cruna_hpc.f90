@@ -34,11 +34,17 @@ program cruna_hpc
 
   ! variables
   real(kind=rk), dimension(:,:,:,:)  ,allocatable    :: qn,q1
-  real                                               :: toc_rhs
-  integer                                            :: nt
-  integer                                            :: s
+  real(kind=rk)                                      :: dq_max_loc,dq_max_glo,dq_max_tol
+  real(kind=rk)                                      :: cputime_glo,walltime,cputime_loc
+  real                                               :: toc_rhs,cputime_loc_r
+  integer      , dimension(2)                        :: ns_nt_start = (/1,0/)
+  integer                                            :: nt,nt0,nt_total
+  integer                                            :: s,s0
+  integer                                            :: cfreq
   integer                                            :: fi1freq ,fi2freq ,fi3freq
-  integer                                            :: fwi1freq,fwi2freq,fwi3freq  
+  integer                                            :: fwi1freq,fwi2freq,fwi3freq
+  character(len=max_length_fname)                    :: restartfile
+  logical                                            :: restart, file_exisit
 
 !!! START !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   call init_parallelism                   ! set image, block, communicators, spmd_type
@@ -71,22 +77,13 @@ program cruna_hpc
   call spread_boundary_conditions_array   ! spread boundary conditions corresponding to parallelism
   call modify_boundary_conditions_array   ! modify array to local indices and clean up unn. conditions
 
-!!! INIT & CHECK
-  call init_direct(q0)
-  call init_reference(q0)
-  call init_filter_weighted(q0)
-
-  ! store initial condition
-  call set_parameter(1,'time.ns',struct_val=params%time%ns)
-  call set_parameter(0,'time.nt',struct_val=params%time%nt)
-  call store(q0,'data_direct_snapshot')
-  qn = q0
-
-  call check_cfl(q0)
-  call check_c(q0)
-  call check_Re
-
 !!! GET FREQS
+  call get_parameter(cfreq     ,'run.cfreq'   ,default = huge(1))
+  call get_parameter(dq_max_tol,'run.ctol'    ,default = tiny(1.0_rk))
+
+  call get_parameter(walltime  ,'run.walltime',default = huge(1.0_rk)) ! walltime in hours
+  walltime = walltime*3600_rk
+
   call get_parameter(fi1freq,'filter.di1freq',default = huge(1))
   call get_parameter(fi2freq,'filter.di2freq',default = huge(1))
   call get_parameter(fi3freq,'filter.di3freq',default = huge(1))
@@ -95,9 +92,65 @@ program cruna_hpc
   call get_parameter(fwi2freq,'filter.dwi2freq',default = huge(1))
   call get_parameter(fwi3freq,'filter.dwi3freq',default = huge(1))
 
+!!! INIT & CHECK
+  call init_direct(q0)
+  call init_reference(q0)
+  call init_filter_weighted(q0) 
+
+  ! store initial condition
+  call set_parameter(1,'time.ns',struct_val=params%time%ns)
+  call set_parameter(0,'time.nt',struct_val=params%time%nt)
+  call store(q0,'data_direct_snapshot')
+
+  call check_cfl(q0)
+  call check_c(q0)
+  call check_Re
+
+  qn = q0 ! normal start, maybe overwritten by restart procedure
+
+!!! RESTART PROCEDURE
+  call get_parameter(restart,'init.restart',default = .false.)
+  if(restart.eqv..true.) then
+
+     if(params%parallelism%block_image.eq.1) then
+
+        call get_fname(restartfile,'restartfile')
+        restartfile = trim(restartfile) // ".h5"
+        call inquire_file(restartfile,file_exisit)  
+
+        if(file_exisit.eqv..true.) then
+           call load(ns_nt_start, 'restartfile')
+
+           write(*,*)
+           write(*,*) "WARNING restart file <",trim(restartfile),"> loading ns: ",trim(num2str(ns_nt_start(1),'(I7.7)'))," nt: ",trim(num2str(ns_nt_start(2),'(I7.7)')) 
+           write(*,*)
+        else
+           write(*,*)
+           write(*,*) "WARNING restart file <",trim(restartfile),"> not found: start from 0"
+           write(*,*)
+        end if
+     end if
+
+     ! distribute ns_nt_start
+     call allreduce(ns_nt_start(1),ns_nt_start(1),'max',params%parallelism%world_comm)
+     call allreduce(ns_nt_start(2),ns_nt_start(2),'max',params%parallelism%world_comm)
+
+     call load(qn,'data_direct_snapshot', ns_optin = ns_nt_start(1), nt_optin = ns_nt_start(2))
+
+  end if
+
+  ! get start subset s0 und start time-step nt0:
+  nt_total = (ns_nt_start(1)-1)*params%time%steps + ns_nt_start(2) + 1                                   ! computing overall time-step based on subset und time-step, add 1 (to avoid recomputing), nt_total: nt with subsets = 1
+  s0       = nt_total/params%time%steps + 1                                                              ! gives s0 (using integer arithmetic)
+  nt0      = nt_total - (s0-1)*params%time%steps   
+
+  call set_parameter(s0 ,'init.s0' )
+  call set_parameter(nt0,'init.nt0')
+
 !!! THE MAIN ACTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
   ! loop subsets
-  do s = 1,params%time%subsets
+  do s = s0,params%time%subsets
 
      !params%time%ns = s
      call set_parameter(s,'time.ns',struct_val=params%time%ns)
@@ -115,7 +168,7 @@ program cruna_hpc
      end if
 
      ! loop timesteps
-     do nt = 1,params%time%steps
+     do nt = nt0,params%time%steps
         !params%time%nt = nt
         call set_parameter(nt,'time.nt',struct_val=params%time%nt)
 
@@ -127,6 +180,33 @@ program cruna_hpc
 
         ! call time-steper
         call time_stepper_direct(q1,qn,params%time%t)
+
+        ! convergence check
+        if (mod(nt,cfreq).eq.0) then
+           dq_max_loc = real(maxval(abs((qn-q1)/params%time%dt)),rk)
+
+           call allreduce(dq_max_glo,dq_max_loc,'max',params%parallelism%world_comm)
+
+           if(params%parallelism%world_image.eq.1) then  
+              write(*,*) 'residual:',trim(num2str(dq_max_glo,'(E13.8)')) ,' (',trim(num2str(dq_max_tol,'(E13.8)')),')'
+           end if
+
+           if(dq_max_glo.le.dq_max_tol) then
+              call store(q1,'data_direct_snapshot')
+              if(params%parallelism%block_image.eq.1) then
+                 ns_nt_start(1) = s
+                 ns_nt_start(2) = nt
+                 call store(ns_nt_start, 'restartfile', file_overwrite_optin=.true.)
+              end if
+
+              if(params%parallelism%world_image.eq.1) then  
+                 write(*,*) 'residual tolerance reached:',trim(num2str(dq_max_glo,'(E13.8)')),' <= ',trim(num2str(dq_max_tol,'(E13.8)'))
+                 write(*,*) "last timestep ", trim(num2str(params%time%nt,'(I7.7)'))," in sub-set ", trim(num2str(params%time%ns,'(I7.7)'))
+              end if
+              call stop_cruna
+           end if
+        end if
+
         qn = q1
 
         ! rhs toc
@@ -161,19 +241,46 @@ program cruna_hpc
            call filter_weighted_i3(qn)
         end if
 
-        ! snapshot
-        if (mod(nt,params%io%dsfreq).eq.0) then
-           call store(qn,'data_direct_snapshot')
-        end if
-
         ! time_series
         call sample(qn)
         call probe(qn)
 
+        ! wall time
+        call cpu_time(cputime_loc_r)
+        cputime_loc = real(cputime_loc_r,rk)                                            ! transfer from real (cpu_time intrinsic) to real_rk (cruna)
+        call allreduce(cputime_glo,cputime_loc,'max',params%parallelism%world_comm)     ! allreduce not defined for real, just real_rk
+
+        if (cputime_glo.gt.walltime) then
+
+           call store(qn,'data_direct_snapshot')
+           if(params%parallelism%block_image.eq.1) then
+              ns_nt_start(1) = s
+              ns_nt_start(2) = nt
+              call store(ns_nt_start, 'restartfile', file_overwrite_optin=.true.)
+           end if
+
+           if(params%parallelism%world_image.eq.1) then  
+              write(*,*) 'cruna walltime reached: ',trim(num2str(cputime_glo/3600_rk,'(F10.7)'))," (",trim(num2str(walltime/3600_rk,'(F10.7)')) ,") hrs"
+              write(*,*) "last timestep ", trim(num2str(params%time%nt,'(I7.7)'))," in sub-set ", trim(num2str(params%time%ns,'(I7.7)'))
+           end if
+
+           call stop_cruna
+        end if
+
+        ! snapshot
+        if (mod(nt,params%io%dsfreq).eq.0) then
+           call store(qn,'data_direct_snapshot')
+           if(params%parallelism%block_image.eq.1) then
+              ns_nt_start(1) = s
+              ns_nt_start(2) = nt
+              call store(ns_nt_start, 'restartfile', file_overwrite_optin=.true.)
+           end if
+        end if
+
         ! screen
         if(params%parallelism%world_image.eq.1) then
            if (mod(nt,params%io%sfreq).eq.0) then
-              write(*,*) "computation (direct) of timestep ", trim(num2str(params%time%nt,'(I6.6)'))," in sub-set ", trim(num2str(params%time%ns,'(I6.6)')), " T/nt: ",trim(num2str(toc(),'(F00.3)'))," (",trim(num2str(toc_rhs,'(F0.3)')),")"
+              write(*,*) "computation (direct) of timestep ", trim(num2str(params%time%nt,'(I7.7)'))," in sub-set ", trim(num2str(params%time%ns,'(I7.7)')), " T/nt: ",trim(num2str(toc(),'(F00.3)'))," (",trim(num2str(toc_rhs,'(F0.3)')),")"
            end if
         end if
 
@@ -181,8 +288,15 @@ program cruna_hpc
 
   end do
 
+  ! store last timestep as snapshot
+  call store(qn,'data_direct_snapshot')
+
   ! clean
   deallocate(q1)
+
+  if(params%parallelism%world_image.eq.1) then
+     write(*,*) 'computation finished --> stop cruna_hpc'
+  end if
 
 !!! END !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   call end_parallelism

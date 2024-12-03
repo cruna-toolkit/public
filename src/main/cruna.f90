@@ -157,7 +157,7 @@ program cruna
      end if
 
      ! GRADIENT/DIRECTION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     call calc_grad(Qs) ! includes store grad
+     call calc_grad(Qs,Q) ! includes store grad
 
      ! LINE-SEARCH !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
      call get_parameter(ls_start,'opt.ls_start',default = huge(1))
