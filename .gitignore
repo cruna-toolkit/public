@@ -51,10 +51,12 @@ __pycache__
 *.bck
 runtime_env
 
-# Tempory files of editors 
+# Tempory files of editors
 *~
 *\#
 etags
+.vscode
+.dependencygraph
 
 # .directory
 *.directory
@@ -95,4 +97,3 @@ usr/unit_test/cdps*
 src/equations/euler_linear_rho_u_p.f90
 src/equations/euler_linear_rho_u_p_trafos.f90
 src/main/cruna_cdps.f90
-
