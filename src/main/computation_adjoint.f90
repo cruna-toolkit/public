@@ -85,7 +85,7 @@ contains
           toc_rhs = toc()
 
           ! boundary handling
-          call set_boundary_condition_qs(qsn,q0)
+          call set_boundary_condition_qs(qsn,q0,outside_rhs=.true.)
 
           ! filter
           if (mod(nt,fi1freq).eq.0) then

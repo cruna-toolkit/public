@@ -65,7 +65,7 @@ reporting: complog
 
 #.NOTPARALLEL: dep
 .PHONY: dep
-dep: complog reporting
+dep: complog reporting folders
 	@echo ""
 	@echo "========= "
 	@echo "MAKE DEP: "
@@ -73,7 +73,7 @@ dep: complog reporting
 	@$(MAKE) -j -f makefiles/makefile_dep
 
 .PHONY: cruna_objects
-cruna_objects: complog reporting dep
+cruna_objects: complog reporting folders dep
 	@echo ""
 	@echo "================ "
 	@echo "COMPILE SRC/CAS: "
@@ -81,8 +81,8 @@ cruna_objects: complog reporting dep
 #       compile everything in SRC and CAS
 	@cd $(SRC) && $(MAKE) -j -f ../makefiles/makefile_cruna_objects $(MAKECMDGOALS)
 
-.PHONY: folders cruna
-cruna: complog reporting dep cruna_objects
+.PHONY: cruna
+cruna: complog reporting folders dep cruna_objects
 	@echo ""
 	@echo "=========== "
 	@echo "LINK CRUNA: "
@@ -91,8 +91,8 @@ cruna: complog reporting dep cruna_objects
 	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
 	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
 
-.PHONY: folders cruna_hpc
-cruna_hpc: complog reporting dep cruna_objects
+.PHONY: cruna_hpc
+cruna_hpc: complog reporting folders dep cruna_objects
 	@echo ""
 	@echo "=============== "
 	@echo "LINK CRUNA_HPC: "
@@ -101,15 +101,25 @@ cruna_hpc: complog reporting dep cruna_objects
 	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
 	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
 
-.PHONY: folders cruna_cdps
-cruna_cdps: complog reporting dep cruna_objects
+.PHONY: cruna_cdps
+cruna_cdps: complog reporting folders dep cruna_objects
 	@echo ""
 	@echo "================ "
 	@echo "LINK CRUNA_CDPS: "
 	@echo "================ "
 #       link objects (*.o) and libs (see local makefile)
 	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps
-	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps	
+	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps
+
+.PHONY: cruna_adj
+cruna_adj: complog reporting folders dep cruna_objects
+	@echo ""
+	@echo "=============== "
+	@echo "LINK CRUNA_ADJ: "
+	@echo "=============== "
+#       link objects (*.o) and libs (see local makefile)
+	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_adj
+	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_adj
 
 ####################################################################################################
 # HELPER
@@ -165,6 +175,15 @@ tags:
 	@FILES=`find $$CAS $$SRC -name "*.f90"`; \
 	etags -o ./etags $$FILES
 
+# folders
+.NOTPARALLEL: folders
+.PHONY: folders
+folders:
+	@mkdir -p bin
+	@mkdir -p lib
+	@mkdir -p obj
+	@ln -sf lib ./include
+
 ####################################################################################################
 # external libaries
 ####################################################################################################
@@ -182,10 +201,3 @@ fftw3:
 
 openBLAS:
 	@$(MAKE) -f makefiles/makefile_ext_openBLAS
-
-folders:
-	@mkdir -p bin
-	@mkdir -p lib
-	@mkdir -p obj
-	@ln -sf lib ./include
-

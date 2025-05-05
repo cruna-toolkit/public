@@ -64,11 +64,12 @@ etags
 # User folder
 .helper/
 usr/*/*/reporting.f90
-usr/stein/*
-usr/mlemke/*
 usr/hoelter/*
-usr/todo/*
+usr/mlemke/*
 usr/schubert/*
+usr/sroka
+usr/stein/*
+usr/todo/*
 usr/westphal/*
 
 # internal docs
@@ -77,11 +78,9 @@ docs/intern
 # external libraries
 ext/*tar.gz
 
-# non-public src/
+# mlemke
 src/geometry/stl.f90
-src/equations/euler_rho_rhou_p_ev_phi.f90
 src/io/tub*.f90
-
 src/opt/force_adjoint_monopole_synthesis.f90
 src/opt/force_adjoint_sound_monopole_array.f90
 src/opt/force_adjoint_sound_monopole_grid_absunits.f90
@@ -89,11 +88,22 @@ src/opt/force_adjoint_sound_monopole_grid_ballon.f90
 src/opt/force_adjoint_sound_monopole_grid.f90
 src/opt/force_adjoint_sound_symmetry_monopole_grid.f90
 src/opt/objective_adjoint_sound_monopole_array.f90
+src/time/rk_o4_e_46_nl.f90
 
-# ah
+# hoelter
+ext/python/hoelter/*
 src/cdps/cdps.f90
 src/math/specfun.f90
-usr/unit_test/cdps*
 src/equations/euler_linear_rho_u_p.f90
 src/equations/euler_linear_rho_u_p_trafos.f90
 src/main/cruna_cdps.f90
+usr/unit_test/cdps*
+
+# schubert
+src/equations/euler_rho_rhou_p_ev_phi.f90
+src/equations/linear_acoustic_p_u_ev_phi_grid_transform.f90
+src/equations/linear_acoustic_p_u_ev_phi_grid_transform_trafos.f90
+usr/unit_test/lae_ev_phi_grid_transform_pulse_reflection
+
+# stein
+ext/matlab/stein/*

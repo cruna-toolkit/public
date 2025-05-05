@@ -1,0 +1,49 @@
+#############################
+#                           #
+#  -- envirnoment info--    #
+#                           #
+#############################
+# to compile with intel, environment variables for intel compiler need to be exported before
+
+#############################
+#                           #
+#    -- export stuff --     #
+#                           #
+#############################
+
+export LCDIR+=-I$(LIB)
+export LLDIR+=-L$(LIB)
+export LLOPT
+export LCOPT
+
+#############################
+#                           #
+#   -- Compiler 64bit --    #
+#                           #
+#############################
+
+# set compiler intel, set compiler flags for gnu
+ifeq ($(strip $(COMP)), intel)
+ export FC = mpif90             # mpif90 as wrapper for ifort
+ export F77 = mpif90
+ export CC = mpicc              # standard icc, used for libaries
+ export CXX = ipcp              # standard ipcp, used for libaries
+ LCOPT+=-traceback		# backtrace, binary contains code lines, simplifies debug
+ LCOPT+=-implicitnone		# force implicit-none
+ LCOPT+=-warn all		# all warnings
+ LCOPT+=-heap-arrays            # use heap instead of stack for temporary arrays
+ LCOPT+=-I${MKLROOT}/include
+endif
+
+############################
+#                          #
+#   -- Linker 64bit --     #
+#                          #
+############################
+
+LLOPT+=-lhdf5_fortran -lhdf5_hl -lhdf5hl_fortran -lhdf5 -lz -ldl 	# includes hdf5 library (here, linking arguments do not depend on the selected compiler/linker)
+LLOPT+=-lfftw3                                                          # includes FFTW3 library
+
+ifeq ($(strip $(COMP)), intel)
+ LLOPT+=  -Wl,--start-group ${MKLROOT}/lib/intel64/libmkl_intel_lp64.a ${MKLROOT}/lib/intel64/libmkl_sequential.a ${MKLROOT}/lib/intel64/libmkl_core.a -Wl,--end-group -lpthread -lm -ldl
+endif

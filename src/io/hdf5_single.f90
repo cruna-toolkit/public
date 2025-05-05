@@ -257,9 +257,10 @@ contains
     ! create dataspace
     call h5screate_simple_f(1, dims, dspace_id, iostat)
     ! create dataset
-    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_double, dspace_id, dset_id, iostat)
+    ! call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_double, dspace_id, dset_id, iostat)
+    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_integer, dspace_id, dset_id, iostat)
     ! write dataset
-    call h5dwrite_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dwrite_f(dset_id, h5t_native_integer, data, dims, iostat)
     ! close dataset and dataspace
     call h5dclose_f(dset_id,iostat)
     call h5sclose_f(dspace_id,iostat)
@@ -1504,7 +1505,8 @@ contains
     dims(1) = size(data,1)
 
     call h5dopen_f_error_control(file_id, trim(dset_name), dset_id, iostat)
-    call h5dread_f(dset_id, h5t_native_double, data, dims, iostat)
+    ! call h5dread_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dread_f(dset_id, h5t_native_integer, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
 
     deallocate(dims)

@@ -1,0 +1,62 @@
+#############################
+#                           #
+#  -- envirnoment info--    #
+#                           #
+#############################
+# to compile with gnu  , works out of the box (with a new shell)
+# to compile with intel, environment variables for intel compiler need to be exported before:
+#    source /opt/intel/bin/ifortvars.sh -arch intel64 -platform linux
+#    source /opt/intel/compilers_and_libraries_2019.0.117/linux/mpi/intel64/bin/mpivars.sh
+
+#############################
+#                           #
+#    -- export stuff --     #
+#                           #
+#############################
+
+export LCDIR+=-I$(LIB)
+export LLDIR+=-L$(LIB)
+export LLOPT
+export LCOPT
+
+#############################
+#                           #
+#   -- Compiler 64bit --    #
+#                           #
+#############################
+
+# set compiler gnu, set compiler flags for gnu
+ifeq ($(strip $(COMP)), gnu)
+ export FC = mpif90             # mpif90 as wrapper for gfortran
+ export CC = mpicc              # standard gcc, used for libaries
+ export CXX = mpicxx            # standard g++, used for libaries
+ LCOPT+=-fbacktrace		# backtrace, binary contains code lines, simplifies debug
+ LCOPT+=-ffree-form		# enforce free-form
+ LCOPT+=-ffree-line-length-none # free line length (more than 132)
+ LCOPT+=-fimplicit-none		# force implicit-none
+ LCOPT+=-Wall			# all warnings
+# LCOPT+=-m64                    # include intel mkl
+# LCOPT+=-I/opt/intel/compilers_and_libraries_2019.0.117/linux/mkl/include    # include intel mkl
+endif
+
+# set compiler intel, set compiler flags for gnu
+ifeq ($(strip $(COMP)), intel)
+ export FC = mpiifort           # mpiifort as wrapper for ifort
+ export CC = icc                # standard icc, used for libaries
+ export CXX = icpc              # standard icpc, used for libaries
+ LCOPT+=-traceback		# backtrace, binary contains code lines, simplifies debug
+ LCOPT+=-implicitnone		# force implicit-none
+ LCOPT+=-warn all		# all warnings
+ LCOPT+=-heap-arrays            # use heap instead of stack for temporary arrays
+# LCOPT+=-I${MKLROOT}/include/intel64/lp64 -I${MKLROOT}/include
+endif
+
+############################
+#                          #
+#   -- Linker 64bit --     #
+#                          #
+############################
+
+LLOPT+=-lhdf5_fortran -lhdf5_hl -lhdf5hl_fortran -lhdf5 -lz -ldl 	# includes hdf5 library (here, linking arguments do not depend on the selected compiler/linker)
+LLOPT+=-lfftw3                                                          # includes FFTW3 library
+LLOPT+=-lopenblas

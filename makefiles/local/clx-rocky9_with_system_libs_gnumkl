@@ -61,25 +61,18 @@ endif
 
 ifeq (gnu, $(strip $(COMP)))
 
-     # openBlas (dynamic) from module/env. {recommended}
-     ifeq ($(OPENBLAS_DIR),)
-          $(error The variable "OPENBLAS_DIR" is empty. Please load: openblas/gcc.9/0.3.7)
+     ifeq ($(MKLROOT),)
+          $(error The variable "MKLROOT" is empty. Please load: module add intel)
      endif
-     LLDIR+=-L$(OPENBLAS_DIR)/lib -Wl,-rpath=$(OPENBLAS_DIR)/lib
-     LLOPT+=-lopenblas
 
-     # openBlas (static) based on self build
-     #LCDIR+=-I$(CRUNA_ROOT)/lib
-     #LLDIR+=-L$(CRUNA_ROOT)/lib
-     #LLOPT+=-lopenblas
+     # MKL-BLAS from module/env.
+     LLDIR+=-L$(MKLROOT)/lib/intel64
+     LLOPT+=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
+     # For Intel MKL don’t link -lm explicitly.
 
-     # FFTW3 (dynamic) from module/env. {recommended}
-     ifeq ($(FFTW3_ROOT),)
-          $(error The variable "FFTW3_ROOT" is empty. Please load: fftw3/ompi/gcc/3.3.8)
-     endif
-     LCDIR+=-I$(FFTW3_ROOT)/include
-     LLDIR+=-Wl,-rpath=$(FFTW3_ROOT)/lib
-     LLOPT+=-lfftw3
+     # MKL-FFTW from module/env.
+     LCDIR+=-I$(MKLROOT)/include/fftw
+     LCOPT+=-lfftw3
 
      # FFTW3 (static) based on self build
      #LCDIR+=-I$(CRUNA_ROOT)/lib

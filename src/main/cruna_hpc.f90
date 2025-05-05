@@ -1,5 +1,5 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! CRUNA_HPC - compressible reactive unsteady navier-stokes hpc - code                               !  
+! CRUNA_HPC - compressible reactive unsteady navier-stokes hpc - code                               !
 ! ML (202+)                                                                                         !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! please: read README.md                                                                            !
@@ -60,7 +60,7 @@ program cruna_hpc
 
 !!! ALLOCATES & GEOMETRY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   call allocate_geometry                  ! allocates the memory in data_geom
-  call init_geometry                      ! init the geometry  
+  call init_geometry                      ! init the geometry
 
   call allocate_force                     ! allocates  force f (optimization stuff)
   call init_force                         ! initialize force f (optimization stuff)
@@ -95,7 +95,7 @@ program cruna_hpc
 !!! INIT & CHECK
   call init_direct(q0)
   call init_reference(q0)
-  call init_filter_weighted(q0) 
+  call init_filter_weighted(q0)
 
   ! store initial condition
   call set_parameter(1,'time.ns',struct_val=params%time%ns)
@@ -116,13 +116,13 @@ program cruna_hpc
 
         call get_fname(restartfile,'restartfile')
         restartfile = trim(restartfile) // ".h5"
-        call inquire_file(restartfile,file_exisit)  
+        call inquire_file(restartfile,file_exisit)
 
         if(file_exisit.eqv..true.) then
            call load(ns_nt_start, 'restartfile')
 
            write(*,*)
-           write(*,*) "WARNING restart file <",trim(restartfile),"> loading ns: ",trim(num2str(ns_nt_start(1),'(I7.7)'))," nt: ",trim(num2str(ns_nt_start(2),'(I7.7)')) 
+           write(*,*) "WARNING restart file <",trim(restartfile),"> loading ns: ",trim(num2str(ns_nt_start(1),'(I7.7)'))," nt: ",trim(num2str(ns_nt_start(2),'(I7.7)'))
            write(*,*)
         else
            write(*,*)
@@ -142,7 +142,7 @@ program cruna_hpc
   ! get start subset s0 und start time-step nt0:
   nt_total = (ns_nt_start(1)-1)*params%time%steps + ns_nt_start(2) + 1                                   ! computing overall time-step based on subset und time-step, add 1 (to avoid recomputing), nt_total: nt with subsets = 1
   s0       = nt_total/params%time%steps + 1                                                              ! gives s0 (using integer arithmetic)
-  nt0      = nt_total - (s0-1)*params%time%steps   
+  nt0      = nt_total - (s0-1)*params%time%steps
 
   call set_parameter(s0 ,'init.s0' )
   call set_parameter(nt0,'init.nt0')
@@ -187,7 +187,7 @@ program cruna_hpc
 
            call allreduce(dq_max_glo,dq_max_loc,'max',params%parallelism%world_comm)
 
-           if(params%parallelism%world_image.eq.1) then  
+           if(params%parallelism%world_image.eq.1) then
               write(*,*) 'residual:',trim(num2str(dq_max_glo,'(E13.8)')) ,' (',trim(num2str(dq_max_tol,'(E13.8)')),')'
            end if
 
@@ -199,7 +199,7 @@ program cruna_hpc
                  call store(ns_nt_start, 'restartfile', file_overwrite_optin=.true.)
               end if
 
-              if(params%parallelism%world_image.eq.1) then  
+              if(params%parallelism%world_image.eq.1) then
                  write(*,*) 'residual tolerance reached:',trim(num2str(dq_max_glo,'(E13.8)')),' <= ',trim(num2str(dq_max_tol,'(E13.8)'))
                  write(*,*) "last timestep ", trim(num2str(params%time%nt,'(I7.7)'))," in sub-set ", trim(num2str(params%time%ns,'(I7.7)'))
               end if
@@ -213,7 +213,7 @@ program cruna_hpc
         toc_rhs = toc()
 
         ! boundary handling
-        call set_boundary_condition_q(qn)
+        call set_boundary_condition_q(qn,outside_rhs=.true.)
 
         ! filter
         if (mod(nt,fi1freq).eq.0) then
@@ -259,7 +259,7 @@ program cruna_hpc
               call store(ns_nt_start, 'restartfile', file_overwrite_optin=.true.)
            end if
 
-           if(params%parallelism%world_image.eq.1) then  
+           if(params%parallelism%world_image.eq.1) then
               write(*,*) 'cruna walltime reached: ',trim(num2str(cputime_glo/3600_rk,'(F10.7)'))," (",trim(num2str(walltime/3600_rk,'(F10.7)')) ,") hrs"
               write(*,*) "last timestep ", trim(num2str(params%time%nt,'(I7.7)'))," in sub-set ", trim(num2str(params%time%ns,'(I7.7)'))
            end if

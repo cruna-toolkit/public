@@ -143,7 +143,7 @@ program cruna
 
      ! store full Qs
      call get_parameter(afreq,'io.afreq',default=1)
-     if (mod(loop,afreq).eq.0) then
+     if ((mod(loop,afreq).eq.0).or.(loop.eq.1)) then
         call store_state(Qs,'data_adjoint_loop')
      end if
 

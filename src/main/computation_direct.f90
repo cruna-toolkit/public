@@ -59,14 +59,8 @@ contains
 
        ! load subset data force
        if(params%time%subsets.gt.1) then
-          if(params%parallelism%block_image.eq.1) then
-             if (params%io%verbosity.ge.1) then
-                write(*,*) " load force of subset", s
-             end if
-          end if
-
           ! load actual force (actual subset is set above)
-          call load(f,'force_subsets_cache')
+          call load_force_subsets_cache ! formerly load(f,'force_subsets_cache')
        end if
 
        ! loop timesteps
@@ -88,7 +82,7 @@ contains
           toc_rhs = toc()
 
           ! boundary handling
-          call set_boundary_condition_q(qn)
+          call set_boundary_condition_q(qn,outside_rhs=.true.)
 
           ! filter
           if (mod(nt,fi1freq).eq.0) then

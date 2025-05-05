@@ -54,13 +54,13 @@ program cruna_adj
 
 !!! ALLOCATES & GEOMETRY !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   call allocate_geometry                  ! allocates the memory in data_geom
-  call init_geometry                      ! init the geometry  
+  call init_geometry                      ! init the geometry
 
   call allocate_volume_penalization       ! allocates volume penalization
   call init_volume_penalization           ! initialize volume penalization
 
   allocate( q0(params%geom%n1b,params%geom%n2b,params%geom%n3b,params%equation%nbr_vars))
-  allocate(qs0(params%geom%n1b,params%geom%n2b,params%geom%n3b,params%equation%nbr_vars))  
+  allocate(qs0(params%geom%n1b,params%geom%n2b,params%geom%n3b,params%equation%nbr_vars))
   allocate(qs1(params%geom%n1b,params%geom%n2b,params%geom%n3b,params%equation%nbr_vars))
   allocate(qsn(params%geom%n1b,params%geom%n2b,params%geom%n3b,params%equation%nbr_vars))
   allocate(  g(params%geom%n1b,params%geom%n2b,params%geom%n3b,params%equation%nbr_vars))
@@ -101,7 +101,7 @@ program cruna_adj
 
         call get_fname(restartfile,'restartfile')
         restartfile = trim(restartfile) // ".h5"
-        call inquire_file(restartfile,file_exisit)  
+        call inquire_file(restartfile,file_exisit)
 
         if(file_exisit.eqv..true.) then
            call load(ns_nt_start, 'restartfile')
@@ -127,7 +127,7 @@ program cruna_adj
   ! get start subset s0 und start time-step nt0:
   nt_total = (ns_nt_start(1)-1)*params%time%steps + ns_nt_start(2) - 1                                   ! computing overall time-step based on subset und time-step, minus 1 (to avoid recomputing), nt_total: nt with subsets = 1
   s0       = nt_total/params%time%steps + 1                                                              ! gives s0 (using integer arithmetic)
-  nt0      = nt_total - (s0-1)*params%time%steps   
+  nt0      = nt_total - (s0-1)*params%time%steps
 
   call set_parameter(s0 ,'init.s0' )
   call set_parameter(nt0,'init.nt0')
@@ -159,7 +159,7 @@ program cruna_adj
         toc_rhs = toc()
 
         ! boundary handling
-        call set_boundary_condition_qs(qsn,q0)
+        call set_boundary_condition_qs(qsn,q0,outside_rhs=.true.)
 
         ! filter
         if (mod(nt,fi1freq).eq.0) then

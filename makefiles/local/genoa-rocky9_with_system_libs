@@ -44,25 +44,30 @@ endif
 
 ifeq (gnu, $(strip $(COMP)))
 
-     # openBlas (dynamic) from module/env.
-     #ifeq ($(OPENBLAS_DIR),)
-     #     $(error The variable "OPENBLAS_DIR" is empty. Please load: openblas/gcc)
-     #endif
-     #LLDIR+=-L$(OPENBLAS_DIR)/lib -Wl,-rpath=$(OPENBLAS_DIR)/lib
-     #LLOPT+=-lopenblas
+     ifeq ($(MKLROOT),)
+          $(error The variable "MKLROOT" is empty. Please load: module add intel)
+          # 2019.5 last version allowing AVX512 on AMD via trick: MKL_DEBUG_CPU_TYPE=5
+          # MKLROOT=/sw/compiler/intel/compilers_and_libraries_2019.5.281/linux/mkl
+          # https://danieldk.eu/Intel-MKL-on-AMD-Zen
+     endif
+
+     # MKL-BLAS from module/env.
+     LLDIR+=-L$(MKLROOT)/lib/intel64
+     LLOPT+=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
+     # For Intel MKL don’t link -lm explicitly.
 
      # AOCL-LAPACK from module/env. {recommended}
-     ifeq ($(AOCL_ROOT),)
-          $(error The variable "AOCL_ROOT" is empty. Please load: module add aocl/gcc)
-     endif
+     #ifeq ($(AOCL_ROOT),)
+     #     $(error The variable "AOCL_ROOT" is empty. Please load: module add aocl/gcc)
+     #endif
      # https://docs.amd.com/r/en-US/63860-AOCL-LAPACK/AOCL-LAPACK-63860
      # https://docs.amd.com/r/en-US/57404-AOCL-user-guide/AOCL-BLAS
      # Single-threaded AOCL-BLAS: -lblis -lpthread
      # Multi-threaded AOCL-BLAS: -lblis-mt -fopenmp
      #
      # AOCL-BLAS dynamic linking {recommended cruna minimum}
-     LLDIR+=-L$(AOCL_ROOT)/lib
-     LLOPT+=-lflame -lblis
+     #LLDIR+=-L$(AOCL_ROOT)/lib
+     #LLOPT+=-lflame -lblis
      #
      # Single-threaded AOCL-BLAS dynamic linking (all flags)
      #LLDIR+=-L$(AOCL_ROOT)/lib
@@ -76,11 +81,22 @@ ifeq (gnu, $(strip $(COMP)))
      #LLDIR+=$(AOCL_ROOT)/lib/libflame.a $(AOCL_ROOT)/lib/libblis-mt.a $(AOCL_ROOT)/lib/libaoclutils.a /usr/lib/gcc/x86_64-redhat-linux/11/libstdc++.so
      #LLOPT+=-lm -fopenmp
 
-     # AOCL-FFTW from module/env. {recommended}
-     LCDIR+=-I$(AOCL_ROOT)/include
-     LLOPT+=-lfftw3
+     # openBlas (dynamic) from module/env.
+     #ifeq ($(OPENBLAS_DIR),)
+     #     $(error The variable "OPENBLAS_DIR" is empty. Please load: openblas/gcc)
+     #endif
+     #LLDIR+=-L$(OPENBLAS_DIR)/lib -Wl,-rpath=$(OPENBLAS_DIR)/lib
+     #LLOPT+=-lopenblas
 
-     # FFTW3 (dynamic) from module/env. {recommended}
+     # MKL-FFTW from module/env. {recommended}
+     LCDIR+=-I$(MKLROOT)/include/fftw
+     LCOPT+=-lfftw3
+
+     # AOCL-FFTW from module/env.
+     #LCDIR+=-I$(AOCL_ROOT)/include
+     #LLOPT+=-lfftw3
+
+     # FFTW3 (dynamic) from module/env.
      #ifeq ($(FFTW3_ROOT),)
      #     $(error The variable "FFTW3_ROOT" is empty. Please load: fftw3/ompi/gcc)
      #endif
@@ -101,7 +117,7 @@ else ifeq (intel, $(strip $(COMP)))
      endif
 
      # MKL-BLAS from module/env. {recommended}
-     LLDIR+=-L$(MKLROOT)/lib/intel64_lin
+     LLDIR+=-L$(MKLROOT)/lib/intel64
      LLOPT+=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
      # For Intel MKL don’t link -lm explicitly.
 
@@ -145,7 +161,7 @@ endif
 
 # HDF5 (dynamic, parallel) from module/env. {recommended} tested with (HDF5 1.14.5, OpenBLAS 0.3.28, GCC 13.3.0) or (HDF5 1.14.5, AOCL 4.2.0, AOCC 4.2.0) on Genoa cluster
 ifeq ($(HDF5_ROOT),)
-     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel/gcc/1.14.5 if gcc, or hdf5-parallel/aocc/1.14.5 if aocc)
+     $(error The variable "HDF5_ROOT" is empty. Please load: hdf5-parallel (gcc or aocc variant))
 endif
 LCDIR+=-I$(HDF5_ROOT)/include -I$(HDF5_ROOT)/mod/shared
 LLDIR+=-L$(HDF5_ROOT)/lib -Wl,-rpath=$(HDF5_ROOT)/lib

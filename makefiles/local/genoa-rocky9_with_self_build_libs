@@ -78,7 +78,7 @@ else ifeq (intel, $(strip $(COMP)))
      endif
 
      # MKL-BLAS from module/env. {recommended}
-     LLDIR+=-L$(MKLROOT)/lib/intel64_lin
+     LLDIR+=-L$(MKLROOT)/lib/intel64
      LLOPT+=-lmkl_intel_lp64 -lmkl_sequential -lmkl_core -lpthread
      # For Intel MKL don’t link -lm explicitly.
 

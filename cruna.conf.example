@@ -8,6 +8,7 @@ export COMP=intel
 # compiler setup
 export GENERIC_MAKEFILE=generic
 export LOCAL_MAKEFILE=with_system_libs.example
+#export LOCAL_MAKEFILE=with_self_build_libs.example
 
 export COPT       		# compiler flags (aka FOPTS) >>> used by makefile_cruna_objects
 export LOPT       		# linker flags (aka LDOPTS) >>> used by main makefile

@@ -1,6 +1,6 @@
 module helper
 
-  use parallelism
+  use parallelism , only: allreduce, bcast, stop_cruna
   use parameter
 
   private
@@ -29,7 +29,7 @@ module helper
      module procedure num2str_rk
   end interface num2str
 
-  interface linspace 
+  interface linspace
      module procedure linspace_i
      module procedure linspace_rk
   end interface linspace
@@ -88,7 +88,7 @@ contains
        do i = 1,size(idx)
           idx_bc = idx(i)
           call bcast(idx_bc,image-1,params%parallelism%block_comm)
-          idx(i) = idx_bc          
+          idx(i) = idx_bc
        end do
 
     case ('min')
@@ -106,11 +106,11 @@ contains
        do i = 1,size(idx)
           idx_bc = idx(i)
           call bcast(idx_bc,image-1,params%parallelism%block_comm)
-          idx(i) = idx_bc          
+          idx(i) = idx_bc
        end do
 
     case default
-       write(*,*) "error in helper.f90:get_index_rk:unknown type, stop" 
+       write(*,*) "error in helper.f90:get_index_rk:unknown type, stop"
        call stop_cruna
 
     end select
@@ -172,7 +172,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     sX1 = size(x1v)
-    sX2 = size(x2v) 
+    sX2 = size(x2v)
     sX3 = size(x3v)
 
     do i = 1,sX3
@@ -197,7 +197,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     sX1 = size(x1v)
-    sX2 = size(x2v) 
+    sX2 = size(x2v)
     sX3 = size(x3v)
 
     ! write(*,*) sX1,sX2,sX3,params%parallelism%block_image
@@ -227,7 +227,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     sX1 = size(x1v)
-    sX2 = size(x2v) 
+    sX2 = size(x2v)
     sX3 = size(x3v)
 
     ! write(*,*) sX1,sX2,sX3,params%parallelism%block_image
@@ -326,9 +326,9 @@ contains
 
 !!!=================================================================================================
   subroutine tic(tic_out)
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer, optional, intent(out) :: tic_out
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     call system_clock(tic_persistent)
 

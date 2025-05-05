@@ -1,6 +1,5 @@
 module mpi_cartesian
 
-  use boundary_conditions
   USE mpi
   use parameter
 
@@ -12,12 +11,10 @@ module mpi_cartesian
   public  :: init_parallelism
   public  :: init_topology
   public  :: spread_parameter
-  public  :: spread_boundary_conditions_array
   public  :: stop_cruna
   private :: init_parameter_array_block
   private :: spread_parameter_array_world
   private :: spread_parameter_array_block
-  private :: spread_boundary_conditions_array_world  
 
   interface allreduce
      module procedure allreduce_ik
@@ -30,9 +27,10 @@ module mpi_cartesian
      module procedure bcast_ik_1d
      module procedure bcast_rk
      module procedure bcast_rk_1d
+     module procedure bcast_rk_2d
   end interface bcast
 
-contains 
+contains
 
 !!!=================================================================================================
   subroutine init_parallelism
@@ -93,8 +91,8 @@ contains
     integer, dimension(3)                                 :: mpi_cart_coord
     logical, dimension(3)                                 :: periodic
     integer                                               :: ierr, new_comm, comm_rank, comm_size
-    integer                                               :: i1 , i2 , i3 
-    integer                                               :: n1b, n2b, n3b 
+    integer                                               :: i1 , i2 , i3
+    integer                                               :: n1b, n2b, n3b
     logical, parameter                                    :: reorder = .true.
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! create block_comm
@@ -158,7 +156,7 @@ contains
 
     if (mod(params%geom%n1,params%parallelism%i1).ne.0) then                                        ! distribute extra points
        if (params%parallelism%block_image.eq.1) then
-          write(*,*) "warning in mpi_cartesian.f90:init_topology:uneven grid distribution (i1), performance losses are possible" 
+          write(*,*) "warning in mpi_cartesian.f90:init_topology:uneven grid distribution (i1), performance losses are possible"
        end if
 
        if ((mpi_cart_coord(1)+1).gt.(params%parallelism%i1 - mod(params%geom%n1,params%parallelism%i1)) ) then
@@ -167,16 +165,16 @@ contains
     end if
 
     if (n1b.lt.1) then                                                                              ! check for over parallelisation
-       write(*,*) "error in mpi_cartesian.f90:init_topology:geom.n1 < parallelism.i1" 
+       write(*,*) "error in mpi_cartesian.f90:init_topology:geom.n1 < parallelism.i1"
        call stop_cruna
     end if
 
     ! split x2-direction ---------------------------------------------------------------------------
     n2b = floor(real(params%geom%n2,rk) / real(params%parallelism%i2,rk))
 
-    if (mod(params%geom%n2,params%parallelism%i2).ne.0) then                                        
+    if (mod(params%geom%n2,params%parallelism%i2).ne.0) then
        if (params%parallelism%block_image.eq.1) then
-          write(*,*) "warning in mpi_cartesian.f90:init_topology:uneven grid distribution (i2), performance losses are possible" 
+          write(*,*) "warning in mpi_cartesian.f90:init_topology:uneven grid distribution (i2), performance losses are possible"
        end if
 
        if ((mpi_cart_coord(2)+1).gt.(params%parallelism%i2 - mod(params%geom%n2,params%parallelism%i2)) ) then
@@ -184,17 +182,17 @@ contains
        end if
     end if
 
-    if (n2b.lt.1) then 
-       write(*,*) "error in mpi_cartesian.f90:init_topology:geom.n2 < parallelism.i2" 
+    if (n2b.lt.1) then
+       write(*,*) "error in mpi_cartesian.f90:init_topology:geom.n2 < parallelism.i2"
        call stop_cruna
     end if
 
     ! split x3-direction ---------------------------------------------------------------------------
     n3b = floor(real(params%geom%n3,rk) / real(params%parallelism%i3,rk))
 
-    if (mod(params%geom%n3,params%parallelism%i3).ne.0) then                                        
+    if (mod(params%geom%n3,params%parallelism%i3).ne.0) then
        if (params%parallelism%block_image.eq.1) then
-          write(*,*) "warning in mpi_cartesian.f90:init_topology:uneven grid distribution (i3), performance losses are possible" 
+          write(*,*) "warning in mpi_cartesian.f90:init_topology:uneven grid distribution (i3), performance losses are possible"
        end if
 
        if ((mpi_cart_coord(3)+1).gt.(params%parallelism%i3 - mod(params%geom%n3,params%parallelism%i3)) ) then
@@ -202,8 +200,8 @@ contains
        end if
     end if
 
-    if (n3b.lt.1) then 
-       write(*,*) "error in mpi_cartesian.f90:init_topology:geom.n3 < parallelism.i3" 
+    if (n3b.lt.1) then
+       write(*,*) "error in mpi_cartesian.f90:init_topology:geom.n3 < parallelism.i3"
        call stop_cruna
     end if
 
@@ -255,8 +253,8 @@ contains
     params%parallelism%i3pen_rank = comm_rank
 
     call set_parameter(params%parallelism%i3pen_comm,'parallelism.i3pen_comm')
-    call set_parameter(params%parallelism%i3pen_size,'parallelism.i3pen_size')    
-    call set_parameter(params%parallelism%i3pen_rank,'parallelism.i3pen_rank')    
+    call set_parameter(params%parallelism%i3pen_size,'parallelism.i3pen_size')
+    call set_parameter(params%parallelism%i3pen_rank,'parallelism.i3pen_rank')
 
   end subroutine init_topology
 !!!=================================================================================================
@@ -279,16 +277,6 @@ contains
 !!!=================================================================================================
 
 !!!=================================================================================================
-  subroutine spread_boundary_conditions_array
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    ! spread the parameter array to all images (world)
-    call spread_boundary_conditions_array_world
-
-  end subroutine spread_boundary_conditions_array
-!!!=================================================================================================
-
-!!!=================================================================================================
   subroutine spread_parameter_array_world
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer                                               :: ierr, size_parameter_array
@@ -301,7 +289,7 @@ contains
     call mpi_bcast(parameter_array, size_parameter_array, mpi_character, 0, params%parallelism%world_comm, ierr)
 
     if (ierr.ne.0) then
-       write(*,*) "error in mpi_cartesian.f90:spread_parameter_array_world:mpi_bcast" 
+       write(*,*) "error in mpi_cartesian.f90:spread_parameter_array_world:mpi_bcast"
        call stop_cruna
     end if
 
@@ -333,39 +321,6 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! nothing to do here
   end subroutine spread_parameter_array_block
-!!!=================================================================================================
-
-!!!=================================================================================================
-  subroutine spread_boundary_conditions_array_world
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    integer                                               :: s1,s2
-    integer                                               :: ierr, size_boundary_conditions_array
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    ! broadcast size of boundary conditions array
-    s1 = size(boundary_conditions_array,1)
-    s2 = size(boundary_conditions_array,2)
-    call mpi_bcast(s1, 1, mpi_integer, 0, params%parallelism%world_comm, ierr)
-    call mpi_bcast(s2, 1, mpi_integer, 0, params%parallelism%world_comm, ierr)
-
-    ! allocate boundary_conditions_array (all but rank 0)
-    if (params%parallelism%world_image.ne.1) then
-       allocate(boundary_conditions_array(s1,s2))
-       boundary_conditions_array = 0.0_rk
-    end if
-
-    ! calculate parameter array size
-    size_boundary_conditions_array = size(boundary_conditions_array)
-
-    ! broadcast parameter_array
-    call mpi_bcast(boundary_conditions_array, size_boundary_conditions_array, params%parallelism%mpi_type_rk, 0, params%parallelism%world_comm, ierr)
-
-    if (ierr.ne.0) then
-       write(*,*) "error in mpi_cartesian.f90:spread_boundary_conditions_array_world:mpi_bcast" 
-       call stop_cruna
-    end if
-
-  end subroutine spread_boundary_conditions_array_world
 !!!=================================================================================================
 
 !!!=================================================================================================
@@ -419,7 +374,7 @@ contains
        call mpi_allreduce(val_in_buffer,val_out,1,params%parallelism%mpi_type_rk,mpi_sum,comm,ierr)
 
     case default
-       write(*,*) "error in mpi_cartesian.f90:allreduce_rk:unknown operation, stop" 
+       write(*,*) "error in mpi_cartesian.f90:allreduce_rk:unknown operation, stop"
        call stop_cruna
 
     end select
@@ -449,7 +404,7 @@ contains
        call mpi_allreduce(val_in,val_out,2,params%parallelism%mpi_type_2rk,mpi_minloc,comm,ierr)
 
     case default
-       write(*,*) "error in mpi_cartesian.f90:allreduce_rk_loc:unknown operation, stop" 
+       write(*,*) "error in mpi_cartesian.f90:allreduce_rk_loc:unknown operation, stop"
        call stop_cruna
 
     end select
@@ -484,7 +439,7 @@ contains
        call mpi_allreduce(val_in_buffer,val_out,1,params%parallelism%mpi_type_ik,mpi_sum,comm,ierr)
 
     case default
-       write(*,*) "error in mpi_cartesian.f90:allreduce_ik:unknown operation, stop" 
+       write(*,*) "error in mpi_cartesian.f90:allreduce_ik:unknown operation, stop"
        call stop_cruna
 
     end select
@@ -540,7 +495,6 @@ contains
   end subroutine bcast_rk
 !!!=================================================================================================
 
-
 !!!=================================================================================================
   subroutine bcast_rk_1d(val, root, comm)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -557,5 +511,25 @@ contains
   end subroutine bcast_rk_1d
 !!!=================================================================================================
 
+!!!=================================================================================================
+  subroutine bcast_rk_2d(array, root, comm)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:), intent(inout)  :: array
+    integer                      , intent(in)     :: root
+    integer                      , intent(in)     :: comm
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer                                       :: ierr
+    integer                                       :: nm
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    nm = size(array)
+    call mpi_bcast(array,nm,params%parallelism%mpi_type_rk,root,comm,ierr)
+
+    if (ierr.ne.0) then
+       write(*,*) "error in mpi_cartesian.f90:bcast_rk_2d"
+       call stop_cruna
+    end if
+
+  end subroutine bcast_rk_2d
+!!!=================================================================================================
 
 end module mpi_cartesian

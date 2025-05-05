@@ -239,16 +239,15 @@ contains
     call Dx3(e_z,qs(:,:,:,5),params%geom%dx3)
 
 
-! -A1_tilde* qs_x1
-    !-(A^T)^(-1)*B1^T  * (xi_x1 qs_xi + eta_x1 qs_eta+ zeta_x1 qs_zeta)
-
+!    -(A^T)^(-1) * B1^T * qs_x1
+    !               -X1 * qs_x1
+    !               -X1 * (xi_x1 qs_xi + eta_x1 qs_eta+ zeta_x1 qs_zeta)
     !  - [0,   -u_1**2, -u_1*u_2, -u_1*u_3, -gamma*p*u_1/(rho*(gamma - 1))]
     !  - [1,     2*u_1,      u_2,      u_3,      gamma*p/(rho*(gamma - 1))]
     !  - [0,         0,      u_1,        0,                              0]
     !  - [0,         0,        0,      u_1,                              0]
     !  - [0, gamma - 1,        0,        0,                      gamma*u_1]
 
-    ! qs_x1
     qs_x(:,:,:,1) = (X_metric(:,:,:,1,1) * a_x + X_metric(:,:,:,2,1) * a_y + X_metric(:,:,:,3,1) * a_z)
     qs_x(:,:,:,2) = (X_metric(:,:,:,1,1) * b_x + X_metric(:,:,:,2,1) * b_y + X_metric(:,:,:,3,1) * b_z)
     qs_x(:,:,:,3) = (X_metric(:,:,:,1,1) * c_x + X_metric(:,:,:,2,1) * c_y + X_metric(:,:,:,3,1) * c_z)
@@ -278,15 +277,15 @@ contains
          -                               gm1 * qs_x(:,:,:,2) &
          -         params%material%gamma*u_1 * qs_x(:,:,:,5)
 
-! -A2_tilde* qs_x2
-    !-(A^T)^(-1)*B2^T = X2
+!    -(A^T)^(-1) * B2^T * qs_x2
+    !               -X2 * qs_x2
+    !               -X2 * (xi_x2 qs_xi + eta_x2 qs_eta+ zeta_x2 qs_zeta)
     !   - [0, -u_1*u_2,   -u_2**2, -u_2*u_3, -gamma*p*u_2/(rho*(gamma - 1))]
     !   - [0,      u_2,         0,        0,                              0]
     !   - [1,      u_1,     2*u_2,      u_3,      gamma*p/(rho*(gamma - 1))]
     !   - [0,        0,         0,      u_2,                              0]
     !   - [0,        0, gamma - 1,        0,                      gamma*u_2]
 
-    ! qs_x2
     qs_x(:,:,:,1) = (X_metric(:,:,:,1,2) * a_x + X_metric(:,:,:,2,2) * a_y + X_metric(:,:,:,3,2) * a_z)
     qs_x(:,:,:,2) = (X_metric(:,:,:,1,2) * b_x + X_metric(:,:,:,2,2) * b_y + X_metric(:,:,:,3,2) * b_z)
     qs_x(:,:,:,3) = (X_metric(:,:,:,1,2) * c_x + X_metric(:,:,:,2,2) * c_y + X_metric(:,:,:,3,2) * c_z)
@@ -317,10 +316,9 @@ contains
          -                               gm1 * qs_x(:,:,:,3) &
          -         params%material%gamma*u_2 * qs_x(:,:,:,5)
 
-
-
-!- A3_tilde* qs_x3
-    !-(A^T)^(-1)*B3^T = X3
+!    -(A^T)^(-1) * B3^T * qs_x3
+    !               -X3 * qs_x3
+    !               -X3 * (xi_x3 qs_xi + eta_x3 qs_eta+ zeta_x3 qs_zeta)
     !  - [0, -u_1*u_3, -u_2*u_3,   -u_3**2, -gamma*p*u_3/(rho*(gamma - 1))]
     !  - [0,      u_3,        0,         0,                              0]
     !  - [0,        0,      u_3,         0,                              0]
@@ -357,9 +355,9 @@ contains
          -                                gm1 * qs_x(:,:,:,4) &
          -          params%material%gamma*u_3 * qs_x(:,:,:,5)
 
-!!!- B_tilde*(Ci^T)_xi
+!-(A^T)^(-1) * (Ci^T * qs)_xi
+
     !-(A^T)^(-1) * (C1^T * qs)_x1
-    !
     !  - [1, -u_1/rho, -u_2/rho, -u_3/rho,         0]
     !  - [0,    1/rho,        0,        0,         0]
     !  - [0,        0,    1/rho,        0,         0]
@@ -378,7 +376,6 @@ contains
     rhs(:,:,:,5) = rhs(:,:,:,5)              -gm1 * (X_metric(:,:,:,1,1) * a_x + X_metric(:,:,:,2,1) * a_y + X_metric(:,:,:,3,1) * a_z)
 
     !-(A^T)^(-1) * (C2^T * qs)_x2
-    !
     !  - [1, -u_1/rho, -u_2/rho, -u_3/rho,         0]
     !  - [0,    1/rho,        0,        0,         0]
     !  - [0,        0,    1/rho,        0,         0]
@@ -397,7 +394,6 @@ contains
     rhs(:,:,:,5) = rhs(:,:,:,5)             -gm1 * (X_metric(:,:,:,1,2) * a_x + X_metric(:,:,:,2,2) * a_y + X_metric(:,:,:,3,2) * a_z)
 
     !-(A^T)^(-1) * (C3^T * qs)_x3
-    !
     ! -  [1, -u_1/rho, -u_2/rho, -u_3/rho,         0]
     ! -  [0,    1/rho,        0,        0,         0]
     ! -  [0,        0,    1/rho,        0,         0]

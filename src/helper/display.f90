@@ -16,7 +16,7 @@ module display
   public :: display_cruna_hpc_start
   public :: display_cruna_cdps_start
 
-contains 
+contains
 
 !!!=================================================================================================
   subroutine display_cruna_start
@@ -36,7 +36,7 @@ contains
        call display_parallelism
        write(*,*) ""
        call display_discretisation
-       write(*,*) "" 
+       write(*,*) ""
        call display_equations
        write(*,*) ""
        call display_filter
@@ -76,7 +76,7 @@ contains
     end if
 
   end subroutine display_cruna_hpc_start
-!!!=================================================================================================  
+!!!=================================================================================================
 
 !!!=================================================================================================
   subroutine display_cruna_cdps_start
@@ -120,18 +120,18 @@ contains
 !!!=================================================================================================
   subroutine display_logo_hpc
 
-    write(*,*) "                                                      " 
+    write(*,*) "                                                      "
     write(*,*) "     ________  __  ___  _____      __ _____  _____    "
     write(*,*) "    / ___/ _ \/ / / / |/ / _ |    / // / _ \/ ___/    "
     write(*,*) "   / /__/ , _/ /_/ /    / __ |   / _  / ___/ /__      "
     write(*,*) "   \___/_/|_|\____/_/|_/_/ |_|__/_//_/_/   \___/      "
-    write(*,*) "                                                      "          
+    write(*,*) "                                                      "
     write(*,*) "(Compressible Reactive Unsteady Navier-Stokes Adjoint)"
     write(*,*) " --> forward high performance computing               "
     write(*,*) "                                                      "
 
   end subroutine display_logo_hpc
-!!!=================================================================================================  
+!!!=================================================================================================
 
 !!!=================================================================================================
   subroutine display_logo_cdps
@@ -155,7 +155,7 @@ contains
     integer,dimension(8) :: date_time
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    call date_and_time(VALUES=date_time) 
+    call date_and_time(VALUES=date_time)
 
     write(*,"(A,I4.4,A,I2.2,A,I2.2)") " date: ", date_time(1), "-", date_time(2), "-", date_time(3)
     write(*,"(A,I2.2,A,I2.2,A,I2.2)") " time: ", date_time(5), ":", date_time(6), ":", date_time(7)
@@ -201,7 +201,7 @@ contains
     write(*,*) "governing equations: ",trim(equations_name)
 
   end subroutine display_equations
-!!!=================================================================================================  
+!!!=================================================================================================
 
 !!!=================================================================================================
   subroutine display_discretisation
@@ -219,8 +219,14 @@ contains
   subroutine display_sponge
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    write(*,*) "sponge (direct) : ",trim(sponge_direct_name)
-    write(*,*) "sponge (adjoint): ",trim(sponge_adjoint_name)
+    character(len=max_length_parameter) :: sponge_shape_type
+
+    call get_parameter(sponge_shape_type,'sponge.shape',default="quadratic")
+    ! originates from subroutine init_boundary_conditions of boundary_conditions.f90
+    sponge_shape_type = " ("//trim(sponge_shape_type)//" shape)"
+
+    write(*,*) "sponge (direct) : ",trim(sponge_direct_name)//trim(sponge_shape_type)
+    write(*,*) "sponge (adjoint): ",trim(sponge_adjoint_name)//trim(sponge_shape_type)
 
   end subroutine display_sponge
 !!!=================================================================================================

@@ -13,7 +13,6 @@ module euler_rho_rhou_p
   use euler_rho_rhou_p_trafos
   use force
   use parameter
-  use sponge_layer
 
   private
 
@@ -53,7 +52,7 @@ contains
 !!! set q
     q = q_in
 
-!!! boundary conditions 1/2: q
+!!! boundary conditions 1/2: q (e.g. single point non-refl. char., zonal non-refl. char. "sponge")
     call set_boundary_condition_q(q)
 
 !!! unpack variables
@@ -105,10 +104,7 @@ contains
 !!! forcing (field)
     call apply_force(rhs)
 
-!!! sponge layer
-    call sponge(rhs,q,qref)
-
-!!! boundary conditions 2/2: rhs
+!!! boundary conditions 2/2: rhs (e.g. no-slip wall)
     call set_boundary_condition_rhs(rhs,q)
 
     deallocate(q)
@@ -159,7 +155,7 @@ contains
 !!! set qs
     qs = qs_in
 
-!!! boundary conditions 1/2: qs
+!!! boundary conditions 1/2: qs (e.g. single point non-refl. char., zonal non-refl. char. "sponge")
     call set_boundary_condition_qs(qs,q)
 
     gm1                     = params%material%gamma - 1.0_rk
@@ -237,7 +233,7 @@ contains
 
     call Dx1(a_x,q(:,:,:,5),params%geom%dx1)
     rhs(:,:,:,1) = rhs(:,:,:,1)                             &
-         + qs(:,:,:,5)*u_1*INV_rho                     * a_x 
+         + qs(:,:,:,5)*u_1*INV_rho                     * a_x
 
     rhs(:,:,:,2) = rhs(:,:,:,2)                             &
          - qs(:,:,:,5)*INV_rho                         * a_x
@@ -307,7 +303,7 @@ contains
 
     call Dx2(a_x,q(:,:,:,5),params%geom%dx2)
     rhs(:,:,:,1) = rhs(:,:,:,1)                             &
-         + qs(:,:,:,5)*u_2*INV_rho                     * a_x 
+         + qs(:,:,:,5)*u_2*INV_rho                     * a_x
 
     rhs(:,:,:,3) = rhs(:,:,:,3)                             &
          - qs(:,:,:,5)*INV_rho                         * a_x
@@ -376,7 +372,7 @@ contains
 
     call Dx3(a_x,q(:,:,:,5),params%geom%dx3)
     rhs(:,:,:,1) = rhs(:,:,:,1)                             &
-         + qs(:,:,:,5)*u_3*INV_rho                     * a_x 
+         + qs(:,:,:,5)*u_3*INV_rho                     * a_x
 
     rhs(:,:,:,4) = rhs(:,:,:,4)                             &
          - qs(:,:,:,5)*INV_rho                         * a_x
@@ -384,11 +380,8 @@ contains
 !!! adjoint force
     rhs = rhs + g
 
-!!! adjoint sponge
-    call sponge_adjoint(rhs,qs,q)
-
-!!! boundary conditions 2/2: rhss
-    call set_boundary_condition_rhss(rhs,qs)
+!!! boundary conditions 2/2: rhss (e.g. no-slip wall)
+    call set_boundary_condition_rhss(rhs,qs,q)
 
     deallocate(qs)
 
