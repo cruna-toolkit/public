@@ -15,7 +15,7 @@ module euler_rho_rhou_p_ev_phi_grid_transform
   use force
   use parallelism
   use parameter
-  use sponge_layer
+!   use sponge_layer
   use volume_penalization
 
   private
@@ -69,6 +69,9 @@ contains
 
 !!! boundary conditions 1/2: q
     call set_boundary_condition_q(q)
+    
+!!! move volume penalization in time
+    call move_volume_penalization(t) 
 
 !!! unpack variables
     phi       = penalization(:,:,:,1)
@@ -148,7 +151,7 @@ contains
     call apply_force(rhs)
 
 !!! sponge layer
-    call sponge(rhs,q,qref)
+!     call sponge(rhs,q,qref)
 
 !!! boundary conditions 2/2: rhs
     call set_boundary_condition_rhs(rhs,q)
@@ -184,10 +187,389 @@ contains
     real(kind=rk), dimension(:,:,:,:), intent(in)    :: g
     real(kind=rk)                    , intent(in)    :: t
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:,:), allocatable   :: qs,qs_x
+    real(kind=rk), dimension(:,:,:)  , allocatable   :: u_1,u_2,u_3,rho
+    real(kind=rk), dimension(:,:,:)  , allocatable   :: a_x,b_x,c_x,d_x,e_x
+    real(kind=rk), dimension(:,:,:)  , allocatable   :: a_y,b_y,c_y,d_y,e_y
+    real(kind=rk), dimension(:,:,:)  , allocatable   :: a_z,b_z,c_z,d_z,e_z
+    real(kind=rk), dimension(:,:,:)  , allocatable   :: gamma_DOT_p_INV_rho_gm1, INV_rho
+    real(kind=rk)                                    :: gm1
+    ! immersed part
+    real(kind=rk), dimension(:,:,:,:), allocatable   :: div_chi_rho
+    real(kind=rk), dimension(:,:,:)  , allocatable   :: phi,div_1_phi
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    allocate(qs(params%geom%n1b,params%geom%n2b,params%geom%n3b,5))
+    allocate(qs_x(params%geom%n1b,params%geom%n2b,params%geom%n3b,5))
+
+    allocate(rho(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(u_1(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(u_2(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(u_3(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+
+    allocate(gamma_DOT_p_INV_rho_gm1(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(                INV_rho(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+
+    allocate(a_x(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(b_x(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(c_x(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(d_x(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(e_x(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+
+    allocate(a_y(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(b_y(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(c_y(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(d_y(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(e_y(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+
+    allocate(a_z(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(b_z(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(c_z(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(d_z(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    allocate(e_z(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+
+    ! immersed part
+    allocate(        phi(params%geom%n1b,params%geom%n2b,params%geom%n3b  ))
+    allocate(  div_1_phi(params%geom%n1b,params%geom%n2b,params%geom%n3b  ))
+    allocate(div_chi_rho(params%geom%n1b,params%geom%n2b,params%geom%n3b,5))
+
+!!! set qs
+    qs = qs_in
+
+!!! boundary conditions 1/2: qs
+    call set_boundary_condition_qs(qs,q)
+
+    gm1                     = params%material%gamma - 1.0_rk
+    gamma_DOT_p_INV_rho_gm1 = params%material%gamma*q(:,:,:,5)/(q(:,:,:,1) * gm1)
+    INV_rho                 = 1.0_rk/q(:,:,:,1)
 
     rhs = 0.0_rk
-    write(*,*) "error in euler_rho_rhou_p_ev_phi.f90:right_hand_side_adjoint_3d:not yet implemented --> STOP"
-    call stop_cruna
+
+    ! unpack direct state
+    rho = q(:,:,:,1)
+    u_1 = q(:,:,:,2)/rho
+    u_2 = q(:,:,:,3)/rho
+    u_3 = q(:,:,:,4)/rho
+
+    ! unpack phi/chi
+    phi       = penalization(:,:,:,1)
+    div_1_phi = penalization(:,:,:,2)
+
+    div_chi_rho(:,:,:,1) = penalization(:,:,:,3)/rho
+    div_chi_rho(:,:,:,2) = penalization(:,:,:,4)/rho
+    div_chi_rho(:,:,:,3) = penalization(:,:,:,5)/rho
+    div_chi_rho(:,:,:,4) = penalization(:,:,:,6)/rho
+    div_chi_rho(:,:,:,5) = penalization(:,:,:,7)/rho
+
+!!! D_xi qs
+    call Dx1(a_x,qs(:,:,:,1),params%geom%dx1)
+    call Dx1(b_x,qs(:,:,:,2),params%geom%dx1)
+    call Dx1(c_x,qs(:,:,:,3),params%geom%dx1)
+    call Dx1(d_x,qs(:,:,:,4),params%geom%dx1)
+    call Dx1(e_x,qs(:,:,:,5),params%geom%dx1)
+
+!!! D_eta qs
+    call Dx2(a_y,qs(:,:,:,1),params%geom%dx2)
+    call Dx2(b_y,qs(:,:,:,2),params%geom%dx2)
+    call Dx2(c_y,qs(:,:,:,3),params%geom%dx2)
+    call Dx2(d_y,qs(:,:,:,4),params%geom%dx2)
+    call Dx2(e_y,qs(:,:,:,5),params%geom%dx2)
+
+!!! D_zeta qs
+    call Dx3(a_z,qs(:,:,:,1),params%geom%dx3)
+    call Dx3(b_z,qs(:,:,:,2),params%geom%dx3)
+    call Dx3(c_z,qs(:,:,:,3),params%geom%dx3)
+    call Dx3(d_z,qs(:,:,:,4),params%geom%dx3)
+    call Dx3(e_z,qs(:,:,:,5),params%geom%dx3)
+
+!-(A^T)^(-1)*B1^T * qs_x1
+    !   -[0,   -u_1**2, -u_1*u_2, -u_1*u_3, -gamma*p*u_1/(rho*(gamma - 1))]
+    !   -[1,     2*u_1,      u_2,      u_3,      gamma*p/(rho*(gamma - 1))]
+    !   -[0,         0,      u_1,        0,                              0]
+    !   -[0,         0,        0,      u_1,                              0]
+    !   -[0,         0,        0,        0,                      gamma*u_1]
+
+    ! qs_x1
+    qs_x(:,:,:,1) = (X_metric(:,:,:,1,1) * a_x + X_metric(:,:,:,2,1) * a_y + X_metric(:,:,:,3,1) * a_z)
+    qs_x(:,:,:,2) = (X_metric(:,:,:,1,1) * b_x + X_metric(:,:,:,2,1) * b_y + X_metric(:,:,:,3,1) * b_z)
+    qs_x(:,:,:,3) = (X_metric(:,:,:,1,1) * c_x + X_metric(:,:,:,2,1) * c_y + X_metric(:,:,:,3,1) * c_z)
+    qs_x(:,:,:,4) = (X_metric(:,:,:,1,1) * d_x + X_metric(:,:,:,2,1) * d_y + X_metric(:,:,:,3,1) * d_z)
+    qs_x(:,:,:,5) = (X_metric(:,:,:,1,1) * e_x + X_metric(:,:,:,2,1) * e_y + X_metric(:,:,:,3,1) * e_z)
+
+    rhs(:,:,:,1) = rhs(:,:,:,1)          &
+         +                     (u_1**2 ) * qs_x(:,:,:,2) &
+         +                     (u_1*u_2) * qs_x(:,:,:,3) &
+         +                     (u_1*u_3) * qs_x(:,:,:,4) &
+         + gamma_DOT_p_INV_rho_gm1 * u_1 * qs_x(:,:,:,5)
+
+    rhs(:,:,:,2) = rhs(:,:,:,2)          &
+         -                                 qs_x(:,:,:,1) &
+         -                    2.0_rk*u_1 * qs_x(:,:,:,2) &
+         -                           u_2 * qs_x(:,:,:,3) &
+         -                           u_3 * qs_x(:,:,:,4) &
+         -       gamma_DOT_p_INV_rho_gm1 * qs_x(:,:,:,5)
+
+    rhs(:,:,:,3) = rhs(:,:,:,3)          &
+         -                           u_1 * qs_x(:,:,:,3)
+
+    rhs(:,:,:,4) = rhs(:,:,:,4)          &
+         -                           u_1 * qs_x(:,:,:,4)
+
+    rhs(:,:,:,5) = rhs(:,:,:,5)          &
+         -     params%material%gamma*u_1 * qs_x(:,:,:,5)
+
+!-(A^T)^(-1)*B2^T = X2
+    !   -[0, -u_1*u_2,   -u_2**2, -u_2*u_3, -gamma*p*u_2/(rho*(gamma - 1))]
+    !   -[0,      u_2,         0,        0,                              0]
+    !   -[1,      u_1,     2*u_2,      u_3,      gamma*p/(rho*(gamma - 1))]
+    !   -[0,        0,         0,      u_2,                              0]
+    !   -[0,        0,         0,        0,                      gamma*u_2]
+
+    ! qs_x2
+    qs_x(:,:,:,1) = (X_metric(:,:,:,1,2) * a_x + X_metric(:,:,:,2,2) * a_y + X_metric(:,:,:,3,2) * a_z)
+    qs_x(:,:,:,2) = (X_metric(:,:,:,1,2) * b_x + X_metric(:,:,:,2,2) * b_y + X_metric(:,:,:,3,2) * b_z)
+    qs_x(:,:,:,3) = (X_metric(:,:,:,1,2) * c_x + X_metric(:,:,:,2,2) * c_y + X_metric(:,:,:,3,2) * c_z)
+    qs_x(:,:,:,4) = (X_metric(:,:,:,1,2) * d_x + X_metric(:,:,:,2,2) * d_y + X_metric(:,:,:,3,2) * d_z)
+    qs_x(:,:,:,5) = (X_metric(:,:,:,1,2) * e_x + X_metric(:,:,:,2,2) * e_y + X_metric(:,:,:,3,2) * e_z)
+
+    rhs(:,:,:,1) = rhs(:,:,:,1)          &
+         +                     (u_2*u_1) * qs_x(:,:,:,2) &
+         +                     (u_2**2 ) * qs_x(:,:,:,3) &
+         +                     (u_2*u_3) * qs_x(:,:,:,4) &
+         + gamma_DOT_p_INV_rho_gm1 * u_2 * qs_x(:,:,:,5)
+
+    rhs(:,:,:,2) = rhs(:,:,:,2)          &
+         -                           u_2 * qs_x(:,:,:,2)
+
+    rhs(:,:,:,3) = rhs(:,:,:,3)          &
+         -                                 qs_x(:,:,:,1) &
+         -                           u_1 * qs_x(:,:,:,2) &
+         -                         2*u_2 * qs_x(:,:,:,3) &
+         -                           u_3 * qs_x(:,:,:,4) &
+         -       gamma_DOT_p_INV_rho_gm1 * qs_x(:,:,:,5)
+
+
+    rhs(:,:,:,4) = rhs(:,:,:,4)          &
+         -                           u_2 * qs_x(:,:,:,4)
+
+    rhs(:,:,:,5) = rhs(:,:,:,5)          &
+         -     params%material%gamma*u_2 * qs_x(:,:,:,5)
+
+
+!-(A^T)^(-1)*B3^T = X3
+    !   -[0, -u_1*u_3, -u_2*u_3,   -u_3**2, -gamma*p*u_3/(rho*(gamma - 1))]
+    !   -[0,      u_3,        0,         0,                              0]
+    !   -[0,        0,      u_3,         0,                              0]
+    !   -[1,      u_1,      u_2,     2*u_3,      gamma*p/(rho*(gamma - 1))]
+    !   -[0,        0,        0,         0,                      gamma*u_3]
+
+    ! qs_x3
+    qs_x(:,:,:,1) = (X_metric(:,:,:,1,3) * a_x + X_metric(:,:,:,2,3) * a_y + X_metric(:,:,:,3,3) * a_z)
+    qs_x(:,:,:,2) = (X_metric(:,:,:,1,3) * b_x + X_metric(:,:,:,2,3) * b_y + X_metric(:,:,:,3,3) * b_z)
+    qs_x(:,:,:,3) = (X_metric(:,:,:,1,3) * c_x + X_metric(:,:,:,2,3) * c_y + X_metric(:,:,:,3,3) * c_z)
+    qs_x(:,:,:,4) = (X_metric(:,:,:,1,3) * d_x + X_metric(:,:,:,2,3) * d_y + X_metric(:,:,:,3,3) * d_z)
+    qs_x(:,:,:,5) = (X_metric(:,:,:,1,3) * e_x + X_metric(:,:,:,2,3) * e_y + X_metric(:,:,:,3,3) * e_z)
+
+    rhs(:,:,:,1) = rhs(:,:,:,1)          &
+         +                     (u_3*u_1) * qs_x(:,:,:,2) &
+         +                     (u_3*u_2) * qs_x(:,:,:,3) &
+         +                     (u_3**2 ) * qs_x(:,:,:,4) &
+         + gamma_DOT_p_INV_rho_gm1 * u_3 * qs_x(:,:,:,5)
+
+    rhs(:,:,:,2) = rhs(:,:,:,2)          &
+         -                           u_3 * qs_x(:,:,:,2)
+
+    rhs(:,:,:,3) = rhs(:,:,:,3)          &
+         -                           u_3 * qs_x(:,:,:,3)
+
+    rhs(:,:,:,4) = rhs(:,:,:,4)          &
+         -                                 qs_x(:,:,:,1) &
+         -                           u_1 * qs_x(:,:,:,2) &
+         -                           u_2 * qs_x(:,:,:,3) &
+         -                         2*u_3 * qs_x(:,:,:,4) &
+         -       gamma_DOT_p_INV_rho_gm1 * qs_x(:,:,:,5)
+
+    rhs(:,:,:,5) = rhs(:,:,:,5)          &
+         -     params%material%gamma*u_3 * qs_x(:,:,:,5)
+
+
+!-(A^T)^(-1) * (C1^T * qs)_x1
+    !
+    ! -[1/phi, -u_1/(phi*rho), -u_2/(phi*rho), -u_3/(phi*rho),               0]
+    ! -[    0,    1/(phi*rho),              0,              0,               0]
+    ! -[    0,              0,    1/(phi*rho),              0,               0]
+    ! -[    0,              0,              0,    1/(phi*rho),               0]
+    ! -[    0,              0,              0,              0, (gamma - 1)/phi]
+    !
+    ! [                     0]
+    ! [                     0]
+    ! [                     0]
+    ! [                     0]
+    ! [-phi*ps*u_1 + phi*us_1]
+
+    call Dx1(a_x,phi*(-u_1*qs(:,:,:,5)+qs(:,:,:,2)),params%geom%dx1)
+    call Dx2(a_y,phi*(-u_1*qs(:,:,:,5)+qs(:,:,:,2)),params%geom%dx2)
+    call Dx3(a_z,phi*(-u_1*qs(:,:,:,5)+qs(:,:,:,2)),params%geom%dx3)
+
+    rhs(:,:,:,5) = rhs(:,:,:,5)       &
+         -              gm1*div_1_phi * (X_metric(:,:,:,1,1) * a_x + X_metric(:,:,:,2,1) * a_y + X_metric(:,:,:,3,1) * a_z)
+
+!-(A^T)^(-1) * (C2^T * qs)_x2
+    !
+    ! -[1/phi, -u_1/(phi*rho), -u_2/(phi*rho), -u_3/(phi*rho),               0]
+    ! -[    0,    1/(phi*rho),              0,              0,               0]
+    ! -[    0,              0,    1/(phi*rho),              0,               0]
+    ! -[    0,              0,              0,    1/(phi*rho),               0]
+    ! -[    0,              0,              0,              0, (gamma - 1)/phi]
+    !
+    ! [                     0]
+    ! [                     0]
+    ! [                     0]
+    ! [                     0]
+    ! [-phi*ps*u_2 + phi*us_2]
+
+    call Dx1(a_x,phi*(-u_2*qs(:,:,:,5)+qs(:,:,:,3)),params%geom%dx1)
+    call Dx2(a_y,phi*(-u_2*qs(:,:,:,5)+qs(:,:,:,3)),params%geom%dx2)
+    call Dx3(a_z,phi*(-u_2*qs(:,:,:,5)+qs(:,:,:,3)),params%geom%dx3)
+
+    rhs(:,:,:,5) = rhs(:,:,:,5)       &
+         -              gm1*div_1_phi * (X_metric(:,:,:,1,2) * a_x + X_metric(:,:,:,2,2) * a_y + X_metric(:,:,:,3,2) * a_z)
+
+
+!-(A^T)^(-1) * (C3^T * qs)_x3
+    !
+    ! -[1/phi, -u_1/(phi*rho), -u_2/(phi*rho), -u_3/(phi*rho),               0]
+    ! -[    0,    1/(phi*rho),              0,              0,               0]
+    ! -[    0,              0,    1/(phi*rho),              0,               0]
+    ! -[    0,              0,              0,    1/(phi*rho),               0]
+    ! -[    0,              0,              0,              0, (gamma - 1)/phi]
+    !
+    ! [                     0]
+    ! [                     0]
+    ! [                     0]
+    ! [                     0]
+    ! [-phi*ps*u_3 + phi*us_3]
+
+    call Dx1(a_x,phi*(-u_3*qs(:,:,:,5)+qs(:,:,:,4)),params%geom%dx1)
+    call Dx2(a_y,phi*(-u_3*qs(:,:,:,5)+qs(:,:,:,4)),params%geom%dx2)
+    call Dx3(a_z,phi*(-u_3*qs(:,:,:,5)+qs(:,:,:,4)),params%geom%dx3)
+
+    rhs(:,:,:,5) = rhs(:,:,:,5)       &
+         -              gm1*div_1_phi * (X_metric(:,:,:,1,3) * a_x + X_metric(:,:,:,2,3) * a_y + X_metric(:,:,:,3,3) * a_z)
+
+!+(A^T)^(-1) * C1~ * c_x1
+    !   [0, 0, 0, 0, ps*u_1/rho]
+    !   [0, 0, 0, 0,    -ps/rho]
+    !   [0, 0, 0, 0,          0]
+    !   [0, 0, 0, 0,          0]
+    !   [0, 0, 0, 0,          0]
+
+    call Dx1(a_x,q(:,:,:,5),params%geom%dx1)
+    call Dx2(a_y,q(:,:,:,5),params%geom%dx2)
+    call Dx3(a_z,q(:,:,:,5),params%geom%dx3)
+    b_x =  (X_metric(:,:,:,1,1) * a_x + X_metric(:,:,:,2,1) * a_y + X_metric(:,:,:,3,1) * a_z)
+    b_y =  (X_metric(:,:,:,1,2) * a_x + X_metric(:,:,:,2,2) * a_y + X_metric(:,:,:,3,2) * a_z)
+    b_z =  (X_metric(:,:,:,1,3) * a_x + X_metric(:,:,:,2,3) * a_y + X_metric(:,:,:,3,3) * a_z)
+
+    rhs(:,:,:,1) = rhs(:,:,:,1)       &
+         +    qs(:,:,:,5)*u_1*INV_rho * b_x
+
+    rhs(:,:,:,2) = rhs(:,:,:,2)       &
+         -        qs(:,:,:,5)*INV_rho * b_x
+
+
+!+(A^T)^(-1) * C2~ * c_x2
+    !   [0, 0, 0, 0, ps*u_2/rho]
+    !   [0, 0, 0, 0,          0]
+    !   [0, 0, 0, 0,    -ps/rho]
+    !   [0, 0, 0, 0,          0]
+    !   [0, 0, 0, 0,          0]
+
+    rhs(:,:,:,1) = rhs(:,:,:,1)       &
+         +    qs(:,:,:,5)*u_2*INV_rho * b_y
+
+    rhs(:,:,:,3) = rhs(:,:,:,3)       &
+         -        qs(:,:,:,5)*INV_rho * b_y
+
+    !+(A^T)^(-1) * C3~ * c_x3
+    !   [0, 0, 0, 0, ps*u_3/rho]
+    !   [0, 0, 0, 0,          0]
+    !   [0, 0, 0, 0,          0]
+    !   [0, 0, 0, 0,    -ps/rho]
+    !   [0, 0, 0, 0,          0]
+
+    rhs(:,:,:,1) = rhs(:,:,:,1)       &
+         +    qs(:,:,:,5)*u_3*INV_rho * b_z
+
+    rhs(:,:,:,4) = rhs(:,:,:,4)       &
+         -        qs(:,:,:,5)*INV_rho * b_z
+
+
+!!! Acounting for gird transformation
+     rhs(:,:,:,1) =  X_jacobian * rhs(:,:,:,1)
+     rhs(:,:,:,2) =  X_jacobian * rhs(:,:,:,2)
+     rhs(:,:,:,3) =  X_jacobian * rhs(:,:,:,3)
+     rhs(:,:,:,4) =  X_jacobian * rhs(:,:,:,4)
+     rhs(:,:,:,5) =  X_jacobian * rhs(:,:,:,5)
+
+!!! Darcy term
+    ! D = -(A^T)^(-1)*S^T
+    !-[-chi_rho, u_1*chi_u1/rho, u_2*chi_u2/rho, u_3*chi_u3/rho,               0]
+    !-[0,          -chi_u1/rho,               0,              0,               0]
+    !-[0,                    0,     -chi_u2/rho,              0,               0]
+    !-[0,                    0,               0,    -chi_u3/rho,               0]
+    !-[0,                    0,               0,              0, -chi_p(gamma-1)]
+
+    rhs(:,:,:,1) = rhs(:,:,:,1) +     div_chi_rho(:,:,:,1)*qs(:,:,:,1) &
+                                - u_1*div_chi_rho(:,:,:,2)*qs(:,:,:,2) &
+                                - u_2*div_chi_rho(:,:,:,3)*qs(:,:,:,3) &
+                                - u_3*div_chi_rho(:,:,:,4)*qs(:,:,:,4)
+
+    rhs(:,:,:,2) = rhs(:,:,:,2) +     div_chi_rho(:,:,:,2)*qs(:,:,:,2)
+    rhs(:,:,:,3) = rhs(:,:,:,3) +     div_chi_rho(:,:,:,3)*qs(:,:,:,3)
+    rhs(:,:,:,4) = rhs(:,:,:,4) +     div_chi_rho(:,:,:,4)*qs(:,:,:,4)
+    rhs(:,:,:,5) = rhs(:,:,:,5) + gm1*div_chi_rho(:,:,:,5)*qs(:,:,:,5)
+
+!!! adjoint force
+! Note: Although this technically represents -g, the sign convention is handled
+!       within calc_objective_g to maintain consistency with existing user cases.
+!       The multiplication by (A^T)^(-1) is an additional step already applied within g,
+!       so this line effectively corresponds to rhs - (A^T)^(-1) * g.
+    rhs = rhs + g
+
+!!! adjoint sponge
+!     call sponge_adjoint(rhs,qs,q)
+
+!!! boundary conditions 2/2: rhss
+    call set_boundary_condition_rhss(rhs,qs,q)
+
+    deallocate(qs)
+
+    deallocate(qs_x)
+
+    deallocate(u_1)
+    deallocate(u_2)
+    deallocate(u_3)
+
+    deallocate(gamma_DOT_p_INV_rho_gm1)
+    deallocate(                INV_rho)
+
+    deallocate(a_x)
+    deallocate(b_x)
+    deallocate(c_x)
+    deallocate(d_x)
+    deallocate(e_x)
+
+    deallocate(a_y)
+    deallocate(b_y)
+    deallocate(c_y)
+    deallocate(d_y)
+    deallocate(e_y)
+
+    deallocate(a_z)
+    deallocate(b_z)
+    deallocate(c_z)
+    deallocate(d_z)
+    deallocate(e_z)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   end subroutine right_hand_side_adjoint_3d

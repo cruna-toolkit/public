@@ -32,8 +32,8 @@ contains
 
     ! do nothing, if you need more please use over-ride functionality of the makefile
     call get_parameter(loop,'opt.loop',default = 1)
-    objective_function(loop,:) = -1.0_rk
-    J = 0.0_rk
+    objective_function(loop,:) = -huge(1.0_rk)
+    J = -huge(1.0_rk)
 
   end subroutine calc_objective
 !!!=================================================================================================

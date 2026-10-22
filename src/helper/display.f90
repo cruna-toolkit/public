@@ -1,12 +1,14 @@
 module display
 
   use discretisation_t    , only: time_stepper_direct_name, time_stepper_adjoint_name
-  use discretisation_x    , only: diff_i1_name, diff_i2_name, diff_i3_name
+  use discretisation_x    , only: diff_i1_name, diff_i2_name, diff_i3_name, diff2_i1_name, diff2_i2_name, diff2_i3_name
   use filter_x            , only: filter_i1_name, filter_i2_name, filter_i3_name
   use filter_weighted_x   , only: filter_weighted_i1_name, filter_weighted_i2_name, filter_weighted_i3_name
   use governing_equations , only: equations_name
   use helper              , only: num2str
+  use io                  , only: io_type_name
   use parameter
+  use precision           , only: prec_type
   use reporting
   use sponge_layer        , only: sponge_direct_name, sponge_adjoint_name
 
@@ -35,6 +37,8 @@ contains
        write(*,*) ""
        call display_parallelism
        write(*,*) ""
+       call display_precision
+       write(*,*) ""
        call display_discretisation
        write(*,*) ""
        call display_equations
@@ -42,6 +46,8 @@ contains
        call display_filter
        write(*,*) ""
        call display_sponge
+       write(*,*) ""
+       call display_io
        write(*,*) ""
     end if
 
@@ -65,6 +71,8 @@ contains
        write(*,*) ""
        call display_parallelism
        write(*,*) ""
+       call display_precision
+       write(*,*) ""
        call display_discretisation
        write(*,*) ""
        call display_equations
@@ -73,6 +81,8 @@ contains
        write(*,*) ""
        call display_sponge
        write(*,*) ""
+       call display_io
+       write(*,*) ""       
     end if
 
   end subroutine display_cruna_hpc_start
@@ -95,8 +105,12 @@ contains
        write(*,*) ""
        call display_parallelism
        write(*,*) ""
+       call display_precision
+       write(*,*) ""
        call display_discretisation
        write(*,*) ""
+       call display_io
+       write(*,*) ""       
     end if
 
   end subroutine display_cruna_cdps_start
@@ -166,7 +180,7 @@ contains
 !!!=================================================================================================
   subroutine display_host_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    character*8 host_name
+    character(len=8) host_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     call hostnm( host_name )
@@ -185,7 +199,7 @@ contains
 !!!=================================================================================================
   subroutine display_login_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    character*128 login_name
+    character(len=128) login_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     call getlog( login_name )
@@ -208,11 +222,23 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     write(*,*) "discretisation time: ",trim(time_stepper_direct_name)
-    write(*,*) "discretisation i1  : ",trim(diff_i1_name)
-    write(*,*) "discretisation i2  : ",trim(diff_i2_name)
-    write(*,*) "discretisation i3  : ",trim(diff_i3_name)
+    write(*,*) "discretisation i1  Dx1:  ",trim(diff_i1_name )
+    write(*,*) "discretisation i2  Dx2:  ",trim(diff_i2_name )
+    write(*,*) "discretisation i3  Dx3:  ",trim(diff_i3_name )
+    write(*,*) "discretisation i1  D2x1: ",trim(diff2_i1_name)
+    write(*,*) "discretisation i2  D2x2: ",trim(diff2_i2_name)
+    write(*,*) "discretisation i3  D2x3: ",trim(diff2_i3_name)
 
   end subroutine display_discretisation
+!!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine display_io
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    write(*,*) "I/O-type : ",trim(io_type_name)
+
+  end subroutine display_io
 !!!=================================================================================================
 
 !!!=================================================================================================
@@ -273,5 +299,14 @@ contains
 
   end subroutine display_parallelism
 !!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine display_precision
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    write(*,*) "floating-point precision: ",trim(prec_type)
+
+  end subroutine display_precision
+!!!==================================================================================================
 
 end module display

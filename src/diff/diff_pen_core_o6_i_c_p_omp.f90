@@ -1,5 +1,6 @@
 module diff_pen_core_o6_i_c_p_omp
 
+  use lapack_tridiag , only: gttrf, gttrs
   use parameter
 
   private
@@ -186,7 +187,7 @@ contains
     q = q_tmp/dx
 
     ! solve Btri U' = F
-    call dgttrs('no transpose', n1, n2, dl, dc, du, du2, ipiv, q, n1, info)
+    call gttrs('no transpose', n1, n2, dl, dc, du, du2, ipiv, q, n1, info)
     if(info.ne.0) then
        write(*,*) "error in diff_pen_core_o6_i_c_o.f90:diff_main:error with id: ",info
     end if
@@ -223,7 +224,7 @@ contains
 !!!==================================================================================================
   subroutine init_left_implicit_diff_part(dl,dc,du,du2,fbrat,fbnorm,ipiv,n1) ! output args
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! LU decomposition for dgttrf
+    ! LU decomposition for gttrf
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     real(kind=rk), dimension(:), allocatable, intent(out) :: dl,dc,du,du2
     real(kind=rk),                            intent(out) :: fbrat
@@ -263,14 +264,14 @@ contains
     dc(n1)   = dc(n1) + (alpha*alpha/dc(1))
     dc(1)    = dc(1)  + dc(1)
 
-    ! init LU decomposition by dgttrf
-    call dgttrf(n1, dl, dc, du, du2, ipiv, info)
+    ! init LU decomposition by gttrf
+    call gttrf(n1, dl, dc, du, du2, ipiv, info)
     if(info.ne.0) then
        write(*,*) "error in diff_pen_core_o6_i_c_o.f90:init_left_implicit_diff_part:error with id: ",info
     end if
 
     ! solve Btri y = fa
-    call dgttrs('no transpose', n1,  1, dl, dc, du, du2, ipiv, fa, n1, info)
+    call gttrs('no transpose', n1,  1, dl, dc, du, du2, ipiv, fa, n1, info)
     if(info.ne.0) then
        write(*,*) "error in diff_pen_core_o6_i_c_o.f90:init_left_implicit_diff_part:error with id: ",info
     end if

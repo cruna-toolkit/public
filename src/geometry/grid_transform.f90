@@ -136,7 +136,8 @@ contains
 
     allocate(X_temp(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
     X_temp     = X
-    if (alpha.ne.0) then
+    if (abs(alpha) .gt. epsilon(1.0_rk)) then
+       ! formerly: if (alpha.ne.0) then       
        X(:,:,:,1) = X_temp(:,:,:,1) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3))
        X(:,:,:,2) = X_temp(:,:,:,2) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3))
        X(:,:,:,3) = X_temp(:,:,:,3) + alpha*sin(X_temp(:,:,:,1) + X_temp(:,:,:,2) + X_temp(:,:,:,3))
@@ -159,8 +160,8 @@ contains
     real(kind=rk)                                   :: x10, x20, x30                     ! global min
     real(kind=rk)                                   :: x11, x21, x31                     ! global max
     real(kind=rk)                                   :: L1, L2, L3                        ! global length
-    real(kind=rk)                                   :: x1_min, x2_min, x3_min            ! global new min
-    real(kind=rk)                                   :: x1_max, x2_max, x3_max            ! global new max
+    real(kind=rk)                                   :: x1_min, x2_min !, x3_min          ! global new min
+    real(kind=rk)                                   :: x1_max, x2_max !, x3_max          ! global new max
     integer                                         :: n1, n2, n3                        ! global number of grid points
     integer, dimension(3), save                     :: point_idx = (/0,0,0/)
     integer                                         :: image     = 0                     ! core

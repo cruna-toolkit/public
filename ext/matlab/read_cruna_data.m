@@ -14,6 +14,49 @@ function [data,params] = read_cruna_data(fname,component,images)
 %% read params of fname
 params = read_cruna_params( fname );
 
+%% MPI-IO case
+mpiio = false;
+
+if isfield(params,'io') && isfield(params.io,'mpiio')
+
+    mpiio_value = params.io.mpiio;
+
+    % unpack cell
+    if iscell(mpiio_value)
+        mpiio_value = mpiio_value{1};
+    end
+
+    % interpret value
+    if ischar(mpiio_value) || isstring(mpiio_value)
+        mpiio = any(strcmpi(strtrim(mpiio_value), {'T','1'}));
+
+    elseif isnumeric(mpiio_value) || islogical(mpiio_value)
+        mpiio = (mpiio_value == 1);
+    end
+end
+
+if mpiio
+
+    [~, DatasetDims, DatasetName] = give_DatasetInfo(fname,'/data');
+
+    start = ones(1,length(DatasetDims));
+    count = DatasetDims;
+
+    if exist('component','var') && length(DatasetDims) > 3
+        start(4) = component;
+        count(4) = 1;
+    end
+
+    disp(['Estimated variable size: ' ...
+        num2str(prod(count)*8/(1000^3),'%2.2f') 'Gb'])
+
+    disp(['read MPI-IO data file: ' fname])
+
+    data = h5read(fname,DatasetName,start,count);
+
+    return
+end
+
 %% determine dnames (data files)
 if ~exist('images','var')
     images = 1:(params.parallelism.i1*params.parallelism.i2*params.parallelism.i3);
@@ -48,7 +91,7 @@ end
 ns = [params.geom.n1,params.geom.n2,params.geom.n3,1,1];
 
 % get dimension of dataset data
-[~, DatasetDims, ~] = give_DatasetInfo(dnames{1},'/data');
+[~, DatasetDims, DatasetName] = give_DatasetInfo(dnames{1},'/data');
 
 % extent data layout corresponding to dataset dimension in file
 for d = 4:size(DatasetDims,2)
@@ -60,9 +103,21 @@ if exist('component','var')
     ns(4) = 1;
 end
 
+% determine precision from first data file
+sample = h5read(dnames{1}, DatasetName, ...
+                ones(1,numel(DatasetDims)), ...
+                ones(1,numel(DatasetDims)));
+
+precision = class(sample);
+bytes_per_value = 4 * strcmp(precision,'single') + ...
+                  8 * strcmp(precision,'double');
+
 % init field
-display(['Estimated variable size: ' num2str(prod(ns)*8/(1000^3),'%2.2f') 'Gb'])
-data  = zeros(ns);
+display(['Estimated variable size: ' ...
+    num2str(prod(ns)*bytes_per_value/(1000^3),'%2.2f') ...
+    ' GB (' precision ')'])
+
+data = zeros(ns, precision);
 
 %% read data/params
 for r = 1:length(dnames)

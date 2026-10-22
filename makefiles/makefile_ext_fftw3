@@ -8,3 +8,9 @@ fftw3:
 	@cd $(FFTW3_path); make -j`nproc --all` 
 	@cd $(FFTW3_path); cp -fv ./.libs/libfftw3.a $(LIB)
 	@cd $(FFTW3_path); cp -fv ./api/fftw3.f $(LIB)
+
+	@cd $(FFTW3_path); make clean
+
+	@cd $(FFTW3_path); ./configure --enable-static --enable-float
+	@cd $(FFTW3_path); make -j`nproc --all` 
+	@cd $(FFTW3_path); cp -fv ./.libs/libfftw3f.a $(LIB)

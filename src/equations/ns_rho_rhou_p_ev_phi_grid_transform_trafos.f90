@@ -1,11 +1,14 @@
 module ns_rho_rhou_p_ev_phi_grid_transform_trafos
 
   use parameter
+  use volume_penalization
 
   private
 
   public give_T, give_c, give_r, give_u, give_p
   public give_W, give_mu, give_cp, give_lambda
+  public give_dmu_dT, give_R_const, give_Pr
+  public apply_matrix_ATm1
 
 contains
 
@@ -31,6 +34,50 @@ contains
 
   end function give_W
 !!!=================================================================================================
+
+!!!=================================================================================================
+  function give_R_const() result(R)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk)                                           :: R
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), save                                     :: R_const
+    logical      , save                                     :: calc_const = .true.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    if(calc_const.eqv..true.) then
+       call get_parameter(R_const, "material.R", default = 8.3144598_rk)
+
+       ! save state
+       calc_const = .false.
+    end if
+
+    R = R_const
+
+  end function give_R_const
+!!!=================================================================================================
+
+!!!=================================================================================================
+  function give_Pr() result(Pr)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk)                                           :: Pr
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), save                                     :: Pr_const
+    logical      , save                                     :: calc_const = .true.
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    if(calc_const.eqv..true.) then
+       ! get Prandtl-number
+       call get_parameter(Pr_const,'material.Pr',default = 0.71_rk)
+
+       ! save state
+       calc_const = .false.
+    end if
+
+    Pr = Pr_const
+
+  end function give_Pr
+!!!=================================================================================================
+
 
 !!!=================================================================================================
   function give_T(q) result(T)
@@ -141,6 +188,36 @@ contains
 
   end function give_mu
 
+function give_dmu_dT(T, mu) result(dmu_dT)
+!==============================================================================================
+! Computes the temperature derivative of dynamic viscosity mu(T) using Sutherland's law
+!==============================================================================================
+    real(kind=rk), dimension(:,:,:)   ,intent(in)           :: T
+    real(kind=rk), dimension(:,:,:)   ,intent(in)           :: mu
+    real(kind=rk), dimension(size(T,1),size(T,2),size(T,3)) :: dmu_dT
+!----------------------------------------------------------------------------------------------
+    real(kind=rk), parameter                                :: S1 = 110.4_rk
+    real(kind=rk), save                                     :: mu0 = 0.0_rk, T0 = 0.0_rk
+    logical      , save                                     :: calc_const = .true.
+!----------------------------------------------------------------------------------------------
+
+    if (calc_const .eqv. .true.) then
+        ! Reference values for air
+        ! Source: F. M. White, Viscous Fluid Flow, 2nd ed., McGraw-Hill (1991), page 29
+        call get_parameter(T0,  'material.T0',  default = 273.0_rk)
+        call get_parameter(mu0, 'material.mu0')
+        calc_const = .false.
+    end if
+
+    ! Correct analytical derivative of Sutherland's law:
+    ! dmu/dT = mu0 * sqrt(T/T0) * ((T0 + S1)/(T + S1)) * [3/(2T) - 1/(T + S1)]
+    dmu_dT = mu0 * sqrt(T / T0) * ((T0 + S1) / (T + S1)) * &
+             ((3.0_rk / (2.0_rk * T)) - (1.0_rk / (T + S1)))
+
+end function give_dmu_dT
+
+
+
 
 !!!=================================================================================================
   function give_lambda(mu) result(lambda)
@@ -191,5 +268,47 @@ contains
     cp = cp_const
 
   end function give_cp
+
+!!!=================================================================================================
+  subroutine apply_matrix_ATm1(vec_out,vec_in,q) ! vec: typically qs (adjoint state) or g (drive of the adjoint)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:,:), intent(out)              :: vec_out    
+    real(kind=rk), dimension(:,:,:,:), intent(in)               :: vec_in
+    real(kind=rk), dimension(:,:,:,:), intent(in)               :: q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:,:), allocatable              :: ui
+    real(kind=rk), dimension(:,:,:)  , allocatable              :: rho
+    integer                                                     :: i
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    allocate(ui(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
+    ui  = give_u(q)
+    
+    allocate(rho(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    rho = give_r(q)
+
+    !-(A^T)^(-1)*(1/phi)
+    !(A.transpose()).inv()
+    !   [1, -u_1/rho, -u_2/rho, -u_3/rho,         0]
+    !   [0,    1/rho,        0,        0,         0]
+    !   [0,        0,    1/rho,        0,         0]
+    !   [0,        0,        0,    1/rho,         0]
+    !   [0,        0,        0,        0, gamma - 1] / phi
+
+    vec_out(:,:,:,1) = 1.0_rk*vec_in(:,:,:,1) &
+         -ui(:,:,:,1)/rho*vec_in(:,:,:,2) &
+         -ui(:,:,:,2)/rho*vec_in(:,:,:,3) &
+         -ui(:,:,:,3)/rho*vec_in(:,:,:,4)
+    vec_out(:,:,:,2) = 1.0_rk/rho*vec_in(:,:,:,2)
+    vec_out(:,:,:,3) = 1.0_rk/rho*vec_in(:,:,:,3)
+    vec_out(:,:,:,4) = 1.0_rk/rho*vec_in(:,:,:,4)
+    vec_out(:,:,:,5) = (params%material%gamma - 1.0_rk)*vec_in(:,:,:,5)
+
+    do i = 1,5
+       vec_out(:,:,:,i) = vec_out(:,:,:,i)*penalization(:,:,:,2) ! *penalization(:,:,:,2) --> 1/phi
+    end do
+
+  end subroutine apply_matrix_ATm1
+!!!=================================================================================================
 
 end module ns_rho_rhou_p_ev_phi_grid_transform_trafos

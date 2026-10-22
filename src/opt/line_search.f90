@@ -94,7 +94,7 @@ contains
        alpha = -polynom_coefficients(2)/(2*polynom_coefficients(1))
 
        if (params%parallelism%world_image.eq.1) then
-          write(*,*) "line-search: alpha0, new alpha: ", alpha0,alpha
+          write(*,*) "line-search: alpha0, new alpha: "             , alpha0,alpha
           write(*,*) "line-search: objectives 0,1,2"                , Js
           write(*,*) "line-search: norm. objectives 0,1,2"          , Js/objective_function(1,1)
           write(*,*) "line-search: polynom_coefficients ax^2+bx+c: ", polynom_coefficients
@@ -104,9 +104,28 @@ contains
        if(alpha.gt.(10.0_rk * alpha0)) then
 
           alpha = 10.0_rk * alpha0
-          
+
           if (params%parallelism%world_image.eq.1) then
-             write(*,*) "line-search: *** WARNING *** :alpha too large:alpha is reduced to 10x alpha0", alpha, alpha0
+             write(*,*) "line-search: *** WARNING *** : alpha too large:alpha is reduced to 10x alpha0", alpha, alpha0
+          end if
+
+       end if
+
+       ! check for negative alpha
+       if(alpha.le.(0.0_rk)) then
+
+          alpha = alpha0
+
+          if (Js(2).le.Js(3)) then
+             alpha = 0.5_rk*alpha0
+          end if
+
+          if (Js(3).lt.Js(2)) then
+             alpha = alpha0
+          end if          
+
+          if (params%parallelism%world_image.eq.1) then
+             write(*,*) "line-search: *** WARNING *** : alpha negative : alpha is set to ", alpha, alpha0
           end if
 
        end if

@@ -51,12 +51,12 @@ ifeq (intel, $(strip $(COMP)))
 
      # MKL-FFTW from module/env. {recommended}
      LCDIR+=-I$(MKLROOT)/include/fftw
-     LCOPT+=-lfftw3
+     LCOPT+=-lfftw3 -lfftw3f
 
      # FFTW3 based on self build (usually not needed, since part of MKL)
      #LCDIR+=-I$(CRUNA_ROOT)/lib
      #LLDIR+=-L$(CRUNA_ROOT)/lib
-     #LLOPT+=-lfftw3	
+     #LLOPT+=-lfftw3 -lfftw3f	
 endif
 
 ifeq (gnu, $(strip $(COMP)))
@@ -79,12 +79,12 @@ ifeq (gnu, $(strip $(COMP)))
      endif
      LCDIR+=-I$(FFTW3_ROOT)/include
      LLDIR+=-Wl,-rpath=$(FFTW3_ROOT)/lib
-     LLOPT+=-lfftw3
+     LLOPT+=-lfftw3 -lfftw3f
 
      # FFTW3 (static) based on self build
      #LCDIR+=-I$(CRUNA_ROOT)/lib
      #LLDIR+=-L$(CRUNA_ROOT)/lib
-     #LLOPT+=-lfftw3
+     #LLOPT+=-lfftw3 -lfftw3f
 endif
 
 # HDF5 (dynamic, parallel) from module/env. {recommended} tested with (HDF5 1.10.5 and Intel 2021.2 or Intel 18.0.6) or (HDF5 1.10.6 and GCC 9.3.0)

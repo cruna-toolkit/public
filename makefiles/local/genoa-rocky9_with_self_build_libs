@@ -63,13 +63,13 @@ ifeq (gnu, $(strip $(COMP)))
      #endif
      #LCDIR+=-I$(FFTW3_ROOT)/include
      #LLDIR+=-Wl,-rpath=$(FFTW3_ROOT)/lib
-     #LLOPT+=-lfftw3
+     #LLOPT+=-lfftw3 -lfftw3f
 
      # FFTW3 (static) based on 3rd party "self build":
      # make -j fftw3
      LCDIR+=-I$(CRUNA_ROOT)/lib
      LLDIR+=-L$(CRUNA_ROOT)/lib
-     LLOPT+=-lfftw3
+     LLOPT+=-lfftw3 -lfftw3f
 
 else ifeq (intel, $(strip $(COMP)))
 
@@ -84,12 +84,12 @@ else ifeq (intel, $(strip $(COMP)))
 
      # MKL-FFTW from module/env. {recommended}
      #LCDIR+=-I$(MKLROOT)/include/fftw
-     #LCOPT+=-lfftw3
+     #LCOPT+=-lfftw3 -lfftw3f
 
      # FFTW3 based on self build (usually not needed, since part of MKL)
      LCDIR+=-I$(CRUNA_ROOT)/lib
      LLDIR+=-L$(CRUNA_ROOT)/lib
-     LLOPT+=-lfftw3
+     LLOPT+=-lfftw3 -lfftw3f
 
 else ifeq (aocc, $(strip $(COMP)))
 
@@ -110,7 +110,7 @@ else ifeq (aocc, $(strip $(COMP)))
      # make -j fftw3
      LCDIR+=-I$(CRUNA_ROOT)/lib
      LLDIR+=-L$(CRUNA_ROOT)/lib
-     LLOPT+=-lfftw3
+     LLOPT+=-lfftw3 -lfftw3f
 
 endif
 

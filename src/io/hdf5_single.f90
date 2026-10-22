@@ -5,6 +5,8 @@ module hdf5_single
   use io_helper
   use parameter
 
+  character(len=max_length_parameter), parameter, public   :: io_type_name = "hdf5_single"
+
   private
 
   public get_dset_dim
@@ -38,6 +40,12 @@ module hdf5_single
 
 contains 
 
+  subroutine set_h5_rk(h5_rk)
+    integer(hid_t), intent(out) :: h5_rk
+
+    h5_rk = h5kind_to_type(rk, H5_REAL_KIND)
+  end subroutine set_h5_rk
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!! s t o r e !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -57,6 +65,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, c_type, dset_id, dspace_id 
+    integer(hid_t)                                                       :: h5_rk
     integer(size_t)                                                      :: s_dim 
     integer                                                              :: iostat
     logical                                                              :: file_exist, write_params = .true., file_overwrite = .false.
@@ -82,7 +91,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -98,6 +107,7 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     if(present(dset_name_optin))then
        dset_name = trim(dset_name_optin)
@@ -122,7 +132,7 @@ contains
        call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
     end if
 
-    ! - data - 
+    ! - data -
 
     ! determine size
     allocate(dims(1))
@@ -130,15 +140,15 @@ contains
     ! create dataspace
     call h5screate_simple_f(1, dims, dspace_id, iostat)
     ! create dataset
-    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_double, dspace_id, dset_id, iostat)
+    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5_rk, dspace_id, dset_id, iostat)
     ! write dataset
-    call h5dwrite_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dwrite_f(dset_id, h5_rk, data, dims, iostat)
     ! close dataset and dataspace
     call h5dclose_f(dset_id,iostat)
     call h5sclose_f(dspace_id,iostat)
     deallocate(dims)
 
-    ! - parameter - 
+    ! - parameter -
     if(write_params.eqv..true.) then
        ! convert parameter to char
        call create_parameter_list(parameter_list)
@@ -209,14 +219,14 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
        end if
 
        ! add filename extension
-       fname = trim(trim(fname)//".h5") 
+       fname = trim(trim(fname)//".h5")
     endif
 
     if(present(file_overwrite_optin))then
@@ -249,7 +259,7 @@ contains
        call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
     end if
 
-    ! - data - 
+    ! - data -
 
     ! determine size
     allocate(dims(1))
@@ -266,7 +276,7 @@ contains
     call h5sclose_f(dspace_id,iostat)
     deallocate(dims)
 
-    ! - parameter - 
+    ! - parameter -
     if(write_params.eqv..true.) then
        ! convert parameter to char
        call create_parameter_list(parameter_list)
@@ -312,6 +322,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, c_type, dset_id, dspace_id 
+    integer(hid_t)                                                       :: h5_rk
     integer(size_t)                                                      :: s_dim 
     integer                                                              :: iostat
     logical                                                              :: file_exist, write_params = .true., file_overwrite = .false.
@@ -337,7 +348,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -353,6 +364,7 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     if(present(dset_name_optin))then
        dset_name = trim(dset_name_optin)
@@ -377,14 +389,14 @@ contains
        call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
     end if
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:2))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
 
     call h5screate_simple_f(2, dims, dspace_id, iostat)
-    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_double, dspace_id, dset_id, iostat)
-    call h5dwrite_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5_rk, dspace_id, dset_id, iostat)
+    call h5dwrite_f(dset_id, h5_rk, data, dims, iostat)
 
     ! close dataset and dataspace
     call h5dclose_f(dset_id,iostat)
@@ -431,6 +443,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, c_type, dset_id, dspace_id 
+    integer(hid_t)                                                       :: h5_rk
     integer(size_t)                                                      :: s_dim 
     integer                                                              :: iostat
     logical                                                              :: file_exist, write_params = .true., file_overwrite = .false.
@@ -456,7 +469,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -472,6 +485,7 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     if(present(dset_name_optin))then
        dset_name = trim(dset_name_optin)
@@ -496,15 +510,15 @@ contains
        call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
     end if
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:3))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
     dims(3) = size(data,3)
 
     call h5screate_simple_f(3, dims, dspace_id, iostat)
-    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_double, dspace_id, dset_id, iostat)
-    call h5dwrite_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5_rk, dspace_id, dset_id, iostat)
+    call h5dwrite_f(dset_id, h5_rk, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
     call h5sclose_f(dspace_id,iostat)
 
@@ -575,7 +589,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
        end if
@@ -614,7 +628,7 @@ contains
        call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
     end if
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:4))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
@@ -668,6 +682,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, c_type, dset_id, dspace_id 
+    integer(hid_t)                                                       :: h5_rk
     integer(size_t)                                                      :: s_dim 
     integer                                                              :: iostat
     logical                                                              :: file_exist, write_params = .true., file_overwrite = .false.
@@ -693,7 +708,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -709,6 +724,7 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     if(present(dset_name_optin))then
        dset_name = trim(dset_name_optin)
@@ -733,7 +749,7 @@ contains
        call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
     end if
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:4))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
@@ -741,8 +757,8 @@ contains
     dims(4) = size(data,4)
 
     call h5screate_simple_f(4, dims, dspace_id, iostat)
-    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_double, dspace_id, dset_id, iostat)
-    call h5dwrite_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5_rk, dspace_id, dset_id, iostat)
+    call h5dwrite_f(dset_id, h5_rk, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
     call h5sclose_f(dspace_id,iostat)
 
@@ -788,6 +804,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, c_type, dset_id, dspace_id 
+    integer(hid_t)                                                       :: h5_rk
     integer(size_t)                                                      :: s_dim 
     integer                                                              :: iostat
     logical                                                              :: file_exist, write_params = .true., file_overwrite = .false.
@@ -813,7 +830,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -829,6 +846,7 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     if(present(dset_name_optin))then
        dset_name = trim(dset_name_optin)
@@ -853,7 +871,7 @@ contains
        call h5fcreate_f_error_control(trim(fname), h5f_acc_trunc_f, file_id, iostat)
     end if
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:5))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
@@ -862,8 +880,8 @@ contains
     dims(5) = size(data,5)
 
     call h5screate_simple_f(5, dims, dspace_id, iostat)
-    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5t_native_double, dspace_id, dset_id, iostat)
-    call h5dwrite_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dcreate_f_error_control(file_id, trim(dset_name),  h5_rk, dspace_id, dset_id, iostat)
+    call h5dwrite_f(dset_id, h5_rk, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
     call h5sclose_f(dspace_id,iostat)
 
@@ -913,6 +931,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, dset_id
+    integer(hid_t)                                                       :: h5_rk
     integer                                                              :: iostat
     character(len=max_length_fname)                                      :: fname,dset_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -934,7 +953,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -952,11 +971,12 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:5))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
@@ -965,7 +985,7 @@ contains
     dims(5) = size(data,5)
 
     call h5dopen_f_error_control(file_id, trim(dset_name), dset_id, iostat)
-    call h5dread_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dread_f(dset_id, h5_rk, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
 
     deallocate(dims)
@@ -990,6 +1010,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, dset_id
+    integer(hid_t)                                                       :: h5_rk
     integer                                                              :: iostat
     character(len=max_length_fname)                                      :: fname,dset_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1011,7 +1032,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -1029,11 +1050,12 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:4))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
@@ -1041,7 +1063,7 @@ contains
     dims(4) = size(data,4)
 
     call h5dopen_f_error_control(file_id, trim(dset_name), dset_id, iostat)
-    call h5dread_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dread_f(dset_id, h5_rk, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
 
     deallocate(dims)
@@ -1066,10 +1088,11 @@ contains
     character(len=*),                       intent(in), optional         :: dset_name_optin
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hid_t)                                                       :: file_id, dset_id
+    integer(hid_t)                                                       :: h5_rk
     integer(hsize_t), dimension(4)                                       :: dims_file, dims_max_file
     integer(hsize_t), dimension(4)                                       :: dims_local
-    integer(hid_t)                                                       :: filespace     
-    integer(hid_t)                                                       :: memspace      
+    integer(hid_t)                                                       :: filespace
+    integer(hid_t)                                                       :: memspace
     integer(hsize_t), dimension(4)                                       :: count = 1
     integer(hssize_t), dimension(4)                                      :: offset
     integer(hsize_t), dimension(4)                                       :: stride = 1
@@ -1094,7 +1117,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -1112,6 +1135,7 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
@@ -1138,7 +1162,7 @@ contains
     call h5screate_simple_f(4, dims_local, memspace, iostat)
 
     ! read data
-    call h5dread_f( dset_id, h5t_native_double, data, dims_local, iostat, mem_space_id = memspace, file_space_id = filespace)
+    call h5dread_f( dset_id, h5_rk, data, dims_local, iostat, mem_space_id = memspace, file_space_id = filespace)
 
     ! close hdf5 (all)
     call h5sclose_f(memspace , iostat)
@@ -1183,7 +1207,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -1205,7 +1229,7 @@ contains
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:4))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
@@ -1237,6 +1261,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, dset_id
+    integer(hid_t)                                                       :: h5_rk
     integer                                                              :: iostat
     character(len=max_length_fname)                                      :: fname,dset_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1258,7 +1283,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -1276,18 +1301,19 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:3))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
     dims(3) = size(data,3)
 
     call h5dopen_f_error_control(file_id, trim(dset_name), dset_id, iostat)
-    call h5dread_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dread_f(dset_id, h5_rk, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
 
     deallocate(dims)
@@ -1311,6 +1337,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, dset_id
+    integer(hid_t)                                                       :: h5_rk
     integer                                                              :: iostat
     character(len=max_length_fname)                                      :: fname,dset_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1332,7 +1359,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -1350,17 +1377,18 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
 
-    ! - data - 
+    ! - data -
     allocate(dims(1:2))
     dims(1) = size(data,1)
     dims(2) = size(data,2)
 
     call h5dopen_f_error_control(file_id, trim(dset_name), dset_id, iostat)
-    call h5dread_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dread_f(dset_id, h5_rk, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
 
     deallocate(dims)
@@ -1385,6 +1413,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hsize_t), dimension(:), allocatable                          :: dims
     integer(hid_t)                                                       :: file_id, dset_id
+    integer(hid_t)                                                       :: h5_rk
     integer                                                              :: iostat
     character(len=max_length_fname)                                      :: fname,dset_name
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -1406,7 +1435,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -1424,16 +1453,17 @@ contains
 
     ! open hdf5
     call h5open_f(iostat)
+    call set_h5_rk(h5_rk)
 
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
 
-    ! - data - 
+    ! - data -
     allocate(dims(1))
     dims(1) = size(data,1)
 
     call h5dopen_f_error_control(file_id, trim(dset_name), dset_id, iostat)
-    call h5dread_f(dset_id, h5t_native_double, data, dims, iostat)
+    call h5dread_f(dset_id, h5_rk, data, dims, iostat)
     call h5dclose_f(dset_id,iostat)
 
     deallocate(dims)
@@ -1478,7 +1508,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -1500,7 +1530,7 @@ contains
     ! open hdf5 file
     call h5fopen_f_error_control(trim(fname), h5f_acc_rdwr_f, file_id, iostat)
 
-    ! - data - 
+    ! - data -
     allocate(dims(1))
     dims(1) = size(data,1)
 
@@ -1561,7 +1591,7 @@ contains
           ! construct fname using optional subset
           call get_fname(fname,type,ns = ns_optin)
 
-       else           
+       else
           ! construct fname (the default way for all io operations)
           call get_fname(fname,type)
 
@@ -1604,7 +1634,7 @@ contains
   end subroutine get_dset_dim
 !!!=================================================================================================
 
-!!!=================================================================================================  
+!!!=================================================================================================
   subroutine h5fopen_f_error_control(fname, file_access_flag, file_id, iostat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     character(len=*)                                  , intent(in)       :: fname
@@ -1623,7 +1653,7 @@ contains
   end subroutine h5fopen_f_error_control
 !!!=================================================================================================
 
-!!!=================================================================================================  
+!!!=================================================================================================
   subroutine h5fcreate_f_error_control(fname, file_access_flag, file_id, iostat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     character(len=*)                                  , intent(in)       :: fname
@@ -1642,7 +1672,7 @@ contains
   end subroutine h5fcreate_f_error_control
 !!!=================================================================================================
 
-!!!=================================================================================================  
+!!!=================================================================================================
   subroutine h5dopen_f_error_control(file_id, dset_name, dset_id, iostat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hid_t)                                    , intent(in)       :: file_id
@@ -1661,7 +1691,7 @@ contains
   end subroutine h5dopen_f_error_control
 !!!=================================================================================================
 
-!!!=================================================================================================  
+!!!=================================================================================================
   subroutine h5dcreate_f_error_control(file_id, dset_name, data_type, dspace_id, dset_id, iostat)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     integer(hid_t)                                    , intent(in)       :: file_id
@@ -1679,6 +1709,6 @@ contains
     end if
 
   end subroutine h5dcreate_f_error_control
-!!!=================================================================================================    
+!!!=================================================================================================
 
 end module hdf5_single

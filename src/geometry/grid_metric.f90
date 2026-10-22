@@ -40,6 +40,10 @@ contains
     ! for full three D transformed grids a rewriting of the metric factors is needed, to hava a zero gradient of a constant function
     ! see CFD2 script or Visbal Gaitonde
 
+    !===============================================================
+    ! Detect and flag periodic boundary conditions
+    !===============================================================
+
     if (trim(diff_i1_type).eq.'periodic') then
        force_periodic(1) = 1.0_rk
     end if
@@ -56,6 +60,63 @@ contains
     c1 = force_periodic(1)
     c2 = force_periodic(2)
     c3 = force_periodic(3)
+
+    !-----------------------------------------------------------------
+    ! WARNINGS FOR PERIODIC GRIDS  (printed only by master process)
+    !-----------------------------------------------------------------
+    if (params%parallelism%block_image == 1) then
+
+       if (abs(c1 - 1.0_rk) <= 10.0_rk * tiny(1.0_rk)) then ! if (c1 == 1.0_rk) then
+          write(*,'(A)') repeat('-',70)
+          write(*,'(A)') ' *** WARNING: periodic boundary in i1-direction detected ***'
+          write(*,'(A)') '   Check that the grid boundary points in i1-direction are'
+          write(*,'(A)') '   consistent with the stretching performed by:'
+          write(*,'(A)') '     cartesian_2_cartesian_strech_shift'
+          write(*,'(A)') '   Otherwise, discontinuities may appear at periodic interfaces.'
+          write(*,'(A)') repeat('-',70)
+          write(*,*)
+       end if
+
+       if (abs(c2 - 1.0_rk) <= 10.0_rk * tiny(1.0_rk)) then ! if (c2 == 1.0_rk) then
+          write(*,'(A)') repeat('-',70)
+          write(*,'(A)') ' *** WARNING: periodic boundary in i2-direction detected ***'
+          write(*,'(A)') '   Check that the grid boundary points in i2-direction are'
+          write(*,'(A)') '   consistent with the stretching performed by:'
+          write(*,'(A)') '     cartesian_2_cartesian_strech_shift'
+          write(*,'(A)') '   Otherwise, discontinuities may appear at periodic interfaces.'
+          write(*,'(A)') repeat('-',70)
+          write(*,*)
+       end if
+
+       if (abs(c3 - 1.0_rk) <= 10.0_rk * tiny(1.0_rk)) then ! if (c3 == 1.0_rk) then
+          write(*,'(A)') repeat('-',70)
+          write(*,'(A)') ' *** WARNING: periodic boundary in i3-direction detected ***'
+          write(*,'(A)') '   Check that the grid boundary points in i3-direction are'
+          write(*,'(A)') '   consistent with the stretching performed by:'
+          write(*,'(A)') '     cartesian_2_cartesian_strech_shift'
+          write(*,'(A)') '   Otherwise, discontinuities may appear at periodic interfaces.'
+          write(*,'(A)') repeat('-',70)
+          write(*,*)
+       end if
+
+       !----------------------------------------------------------------
+       ! NOTE:
+       !   To create an equivalent periodic, equidistant coordinate
+       !   vector in MATLAB (for one direction, e.g. x), given the
+       !   number of points N and the physical domain length L, use:
+       !
+       !     N = number_of_points;     % e.g. N = 128
+       !     L = physical_domain_size; % e.g. L = 2*pi
+       !     dx = L / N;               % spacing for periodic grid
+       !
+       !     % Periodic, zero-centered grid (includes only one boundary)
+       !     x = linspace(-L/2, L/2 - dx, N).';
+       !
+       !  -> This gives an equidistant, periodic-friendly vector
+       !     centered at zero with spacing dx.
+       !----------------------------------------------------------------
+
+    end if
 
     ! save c1,c2,c3 in params.geom
     call set_parameter(c1,'geom.c1')

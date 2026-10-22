@@ -5,6 +5,7 @@ module linear_acoustic_p_u_trafos
   private
 
   public give_T, give_c, give_r, give_u, give_p
+  public apply_matrix_ATm1
 
 contains
 
@@ -52,7 +53,7 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     real(kind=rk), dimension(:,:,:,:), intent(in)           :: q
     real(kind=rk), dimension(size(q,1),size(q,2),size(q,3)) :: rho
-    real(kind=rk)                                           :: rho0
+    !real(kind=rk)                                           :: rho0
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     rho = params%init%rho
@@ -86,6 +87,19 @@ contains
     end do
 
   end function give_u
+!!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine apply_matrix_ATm1(vec_out,vec_in,q) ! vec: typically qs (adjoint state) or g (drive of the adjoint)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:,:), intent(out)              :: vec_out    
+    real(kind=rk), dimension(:,:,:,:), intent(in)               :: vec_in
+    real(kind=rk), dimension(:,:,:,:), intent(in)               :: q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    vec_out = vec_in ! ATm1 is ones(5)/unit matrix, ask AH for details
+
+  end subroutine apply_matrix_ATm1
 !!!=================================================================================================
 
 end module linear_acoustic_p_u_trafos

@@ -74,57 +74,59 @@ contains
     kvector(:,:,:,3) = kvector(:,:,:,3)/length(3)
     half_norm_dx = 0.5_rk*min(params%geom%dx1/length(1), params%geom%dx2/length(2), params%geom%dx3/length(3))
     do k = 1, size(kvector, 3)
-      do j = 1, size(kvector, 2)
-        do i = 1, size(kvector, 1)
-            tmp_abs_kvec = abs(kvector(i,j,k,:))
-            max_abs_value = maxval(tmp_abs_kvec)
-            ! set largest component to 1.0
-            ! set other components - if equal length to largest - to 1.0 and otherwise to 0.0
-            if (max_abs_value == tmp_abs_kvec(1)) then
+       do j = 1, size(kvector, 2)
+          do i = 1, size(kvector, 1)
+             tmp_abs_kvec = abs(kvector(i,j,k,:))
+             max_abs_value = maxval(tmp_abs_kvec)
+             ! set largest component to 1.0
+             ! set other components - if equal length to largest - to 1.0 and otherwise to 0.0
+             if (abs(max_abs_value - tmp_abs_kvec(1)) .lt. epsilon(1.0_rk)) then
+                ! formerly: if (max_abs_value == tmp_abs_kvec(1)) then
 
-              kvector(i,j,k,1) = sign(1.0_rk, kvector(i,j,k,1))
-              if (max_abs_value-tmp_abs_kvec(2)<half_norm_dx) then ! diagonal element
-                kvector(i,j,k,2) = sign(1.0_rk, kvector(i,j,k,2))
-              else
-                kvector(i,j,k,2) = 0.0_rk
-              end if
-              if (max_abs_value-tmp_abs_kvec(3)<half_norm_dx) then ! diagonal element
-                kvector(i,j,k,3) = sign(1.0_rk, kvector(i,j,k,3))
-              else
-                kvector(i,j,k,3) = 0.0_rk
-              end if
-
-            elseif (max_abs_value == tmp_abs_kvec(2)) then
-
-              if (max_abs_value-tmp_abs_kvec(1)<half_norm_dx) then ! diagonal element
                 kvector(i,j,k,1) = sign(1.0_rk, kvector(i,j,k,1))
-              else
-                kvector(i,j,k,1) = 0.0_rk
-              end if
-              kvector(i,j,k,2) = sign(1.0_rk, kvector(i,j,k,2))
-              if (max_abs_value-tmp_abs_kvec(3)<half_norm_dx) then ! diagonal element
-                kvector(i,j,k,3) = sign(1.0_rk, kvector(i,j,k,3))
-              else
-                kvector(i,j,k,3) = 0.0_rk
-              end if
+                if (max_abs_value-tmp_abs_kvec(2)<half_norm_dx) then ! diagonal element
+                   kvector(i,j,k,2) = sign(1.0_rk, kvector(i,j,k,2))
+                else
+                   kvector(i,j,k,2) = 0.0_rk
+                end if
+                if (max_abs_value-tmp_abs_kvec(3)<half_norm_dx) then ! diagonal element
+                   kvector(i,j,k,3) = sign(1.0_rk, kvector(i,j,k,3))
+                else
+                   kvector(i,j,k,3) = 0.0_rk
+                end if
+                
+             elseif (abs(max_abs_value - tmp_abs_kvec(2)) .lt. epsilon(1.0_rk)) then
+                ! formerly: elseif (max_abs_value == tmp_abs_kvec(2)) then
 
-            else ! max_abs_value == tmp_abs_kvec(3)
-
-              if (max_abs_value-tmp_abs_kvec(1)<half_norm_dx) then ! diagonal element
-                kvector(i,j,k,1) = sign(1.0_rk, kvector(i,j,k,1))
-              else
-                kvector(i,j,k,1) = 0.0_rk
-              end if
-              if (max_abs_value-tmp_abs_kvec(2)<half_norm_dx) then ! diagonal element
+                if (max_abs_value-tmp_abs_kvec(1)<half_norm_dx) then ! diagonal element
+                   kvector(i,j,k,1) = sign(1.0_rk, kvector(i,j,k,1))
+                else
+                   kvector(i,j,k,1) = 0.0_rk
+                end if
                 kvector(i,j,k,2) = sign(1.0_rk, kvector(i,j,k,2))
-              else
-                kvector(i,j,k,2) = 0.0_rk
-              end if
-              kvector(i,j,k,3) = sign(1.0_rk, kvector(i,j,k,3))
+                if (max_abs_value-tmp_abs_kvec(3)<half_norm_dx) then ! diagonal element
+                   kvector(i,j,k,3) = sign(1.0_rk, kvector(i,j,k,3))
+                else
+                   kvector(i,j,k,3) = 0.0_rk
+                end if
 
-            end if
-        end do
-      end do
+             else ! max_abs_value == tmp_abs_kvec(3)
+
+                if (max_abs_value-tmp_abs_kvec(1)<half_norm_dx) then ! diagonal element
+                   kvector(i,j,k,1) = sign(1.0_rk, kvector(i,j,k,1))
+                else
+                   kvector(i,j,k,1) = 0.0_rk
+                end if
+                if (max_abs_value-tmp_abs_kvec(2)<half_norm_dx) then ! diagonal element
+                   kvector(i,j,k,2) = sign(1.0_rk, kvector(i,j,k,2))
+                else
+                   kvector(i,j,k,2) = 0.0_rk
+                end if
+                kvector(i,j,k,3) = sign(1.0_rk, kvector(i,j,k,3))
+
+             end if
+          end do
+       end do
     end do
 
     call normalize_kvector(kvector)
@@ -177,11 +179,13 @@ contains
        do j = 1, size(kvector, 2)
           do i = 1, size(kvector, 1)
              max_abs_value = maxval(abs(kvector(i,j,k,:)))
-             if (max_abs_value == abs(kvector(i,j,k,1))) then
+             if (abs(max_abs_value - abs(kvector(i,j,k,1))) .lt. epsilon(1.0_rk)) then
+                ! formerly if (max_abs_value == abs(kvector(i,j,k,1))) then
                 kvector(i,j,k,1) = sign(1.0_rk, kvector(i,j,k,1))
                 kvector(i,j,k,2) = 0.0_rk
                 kvector(i,j,k,3) = 0.0_rk
-             elseif (max_abs_value == abs(kvector(i,j,k,2))) then
+             elseif (abs(max_abs_value - abs(kvector(i,j,k,2))) .lt. epsilon(1.0_rk)) then
+                ! formerly elseif (max_abs_value == abs(kvector(i,j,k,2))) then
                 kvector(i,j,k,1) = 0.0_rk
                 kvector(i,j,k,2) = sign(1.0_rk, kvector(i,j,k,2))
                 kvector(i,j,k,3) = 0.0_rk

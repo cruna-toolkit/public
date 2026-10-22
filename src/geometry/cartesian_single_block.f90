@@ -45,7 +45,7 @@ contains
     character(len=max_length_parameter)               :: grid_transform_type
     logical                                           :: grid_deformed
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-   
+
 !!! create local global block indices
     if (params%parallelism%world_size.eq.1) then
        ! no parallelism (or just one process)
@@ -109,7 +109,7 @@ contains
        x31i = s
     end if
 
-!     write(*,*) x10i,x11i,x20i,x21i,x30i,x31i,params%parallelism%block_image
+    !     write(*,*) x10i,x11i,x20i,x21i,x30i,x31i,params%parallelism%block_image
 
 !!! create and store index grid (needed for e.g. block reconstruction)
     allocate(x1i(params%geom%n1b))
@@ -122,8 +122,6 @@ contains
 
     call ndgrid(Xi,x1i,x2i,x3i)
 
-    call store(Xi,'geometry_indices')
-
     call set_parameter(x10i,'geom.xi10i')
     call set_parameter(x11i,'geom.xi11i')
     call set_parameter(x20i,'geom.xi20i')
@@ -131,17 +129,22 @@ contains
     call set_parameter(x30i,'geom.xi30i')
     call set_parameter(x31i,'geom.xi31i')
 
-!     write(*,*) x1i,x2i,x3i,params%parallelism%block_image
+    call store(Xi,'geometry_indices')
+
+    !     write(*,*) x1i,x2i,x3i,params%parallelism%block_image
 
 !!! compute the physical grid based on the obtained indices
     call get_parameter(grid_transform_type,'geom.grid_transform_type',default = 'cartesian_2_cartesian_strech_shift')
     call get_parameter(grid_deformed      ,'geom.grid_deformed'      ,default = .false.)
 
-   select case (trim(grid_transform_type))    
+    select case (trim(grid_transform_type))
 
 
     case ('cartesian_2_cartesian_strech_shift')
        call cartesian_2_cartesian_strech_shift(X,x10i,x20i,x30i)
+
+       allocate( X_calc_space(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
+       X_calc_space = X
 
     case ('cartesian_2_distorted_wave')
        if (grid_deformed.eqv..false.) then
@@ -152,8 +155,8 @@ contains
        call cartesian_2_cartesian_strech_shift(X,x10i,x20i,x30i)
 
        allocate( X_calc_space(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
-       X_calc_space = X     ! X_temp are is the calculation space. It is needed to remove the non periodic part in calc_metric  
-       call distort_wave(X)  
+       X_calc_space = X     ! X_temp are is the calculation space. It is needed to remove the non periodic part in calc_metric
+       call distort_wave(X)
 
     case ('cartesian_2_distorted_local_refinement')
        if(params%parallelism%block_image==1) write(*,*) 'trying new distortion (refinement)'
@@ -165,9 +168,9 @@ contains
        call cartesian_2_cartesian_strech_shift(X,x10i,x20i,x30i)
 
        allocate( X_calc_space(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
-       X_calc_space = X     ! X_temp are is the calculation space. It is needed to remove the non periodic part in calc_metric  
+       X_calc_space = X     ! X_temp are is the calculation space. It is needed to remove the non periodic part in calc_metric
        call distort_local_refinement(X) 
-       
+
     case ('cartesian_2_distorted_user_defined')
        if(params%parallelism%block_image==1) write(*,*) 'using user defined grid'
        if (grid_deformed.eqv..false.) then
@@ -178,8 +181,8 @@ contains
        call cartesian_2_cartesian_strech_shift(X,x10i,x20i,x30i)
 
        allocate( X_calc_space(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
-       X_calc_space = X     ! X_temp are is the calculation space. It is needed to remove the non periodic part in calc_metric  
-       call distort_user_defined(X,x10i,x20i,x30i)       
+       X_calc_space = X     ! X_temp are is the calculation space. It is needed to remove the non periodic part in calc_metric
+       call distort_user_defined(X,x10i,x20i,x30i)
     case default
        write(*,*) "error in cartesian_single_block.f90:init_geometry:unknown grid_transform_type:",trim(grid_transform_type)
        call stop_cruna
@@ -189,10 +192,10 @@ contains
     ! store physical geometry
     call store(X,'geometry')
 
-    ! call metric if needed    
+    ! call metric if needed
     if (grid_deformed.eqv..true.) then
        if ((params%io%verbosity.ge.1).and.(params%parallelism%world_image.eq.1)) then
-          write(*,*) " calc metric coefficients" 
+          write(*,*) " calc metric coefficients"
        end if
        call calc_metric(X_calc_space)                                  ! actually X is the important quantity, but it is global
        call store(X_metric  ,'geometry_metrics')

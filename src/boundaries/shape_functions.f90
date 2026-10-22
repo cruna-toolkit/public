@@ -9,15 +9,17 @@ module shape_functions
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   use data_geom , only: X
-  use io , only: store
+  use io        , only: store, load
   use parameter , only: rk, params, get_parameter
 
   private
 
-  public :: init_quadratic_shape_fct, init_cos_shape_fct
+  public  :: init_quadratic_shape_fct, init_cos_shape_fct, init_quadratic_shape_fct_grid_transform, init_quadratic_shape_fct_grid_transform_3D
 
   private :: quad_shape_fct, cos_shape_fct
   private :: init_general_shape_fct
+  private :: init_general_shape_fct_grid_transform
+  private :: init_general_shape_fct_grid_transform_3D
 
 contains
 
@@ -30,6 +32,26 @@ contains
 
   end subroutine init_quadratic_shape_fct
 !!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine init_quadratic_shape_fct_grid_transform(phi_shape)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:), allocatable, intent(out)    :: phi_shape
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    call init_general_shape_fct_grid_transform(phi_shape, quad_shape_fct)
+
+  end subroutine init_quadratic_shape_fct_grid_transform
+!!!=================================================================================================
+
+  subroutine init_quadratic_shape_fct_grid_transform_3D(phi_shape)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:), allocatable, intent(out)    :: phi_shape
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    call init_general_shape_fct_grid_transform_3D(phi_shape, quad_shape_fct)
+
+  end subroutine init_quadratic_shape_fct_grid_transform_3D
+!!!=================================================================================================
+
 
 !!!=================================================================================================
   subroutine init_cos_shape_fct(phi_shape)
@@ -64,6 +86,7 @@ contains
     y = 0.5_rk + 0.5_rk*cos((x-x0)*(pi/len0))
   end function cos_shape_fct
 !!!=================================================================================================
+
 
 !!!=================================================================================================
   subroutine init_general_shape_fct(phi_shape, fct_pointer)
@@ -145,9 +168,237 @@ contains
     phi_shape = amplitude*phi_shape
 
     ! store sponge
-    if (params%io%verbosity.ge.2) call store(phi_shape,'shape_fct')
+    call store(phi_shape,'sponge_shape_function')
 
   end subroutine init_general_shape_fct
 !!!=================================================================================================
+
+
+!!!=================================================================================================
+  subroutine init_general_shape_fct_grid_transform(phi_shape, fct_pointer)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:), allocatable, intent(out)    :: phi_shape
+    interface
+       function fct_pointer(x,x0,len0) result(y)
+         import                                                  :: rk
+         real(kind=rk), dimension(:,:,:), intent(in)             :: x
+         real(kind=rk), intent(in)                               :: x0, len0
+         real(kind=rk), dimension(size(x,1),size(x,2),size(x,3)) :: y
+       end function fct_pointer
+    end interface
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk),dimension(:,:,:)  , allocatable                :: sigma
+    real(kind=rk),dimension(:,:,:,:), allocatable                :: X_calc
+    real(kind=rk)                                                :: x10,x11,x20,x21 !,x30,x31
+    real(kind=rk)                                                :: amplitude,len
+    real(kind=rk)                                                :: x_min,x_max
+    real(kind=rk)                                                :: length_xm, length_xp
+    real(kind=rk)                                                :: length_ym, length_yp
+    ! real(kind=rk)                                                :: length_zm, length_zp
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if(.not.allocated(phi_shape)) then
+       allocate(phi_shape(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+       allocate(sigma(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+       allocate(       X_calc(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
+    end if
+
+    ! get block dimensions from parameter.dat
+    call get_parameter(x10,'geom.x10',default = 0.0_rk)
+    call get_parameter(x20,'geom.x20',default = 0.0_rk)
+    ! call get_parameter(x30,'geom.x30',default = 0.0_rk)
+    call get_parameter(x11,'geom.x11',default = 1.0_rk)
+    call get_parameter(x21,'geom.x21',default = 1.0_rk)
+    ! call get_parameter(x31,'geom.x31',default = 1.0_rk)
+
+    ! get sponge dimensions from parameter.dat (based on equdistant grid)
+    ! call get_parameter(len,'sponge.length')
+    call get_parameter(length_xm,'sponge.length_xm')
+    call get_parameter(length_xp,'sponge.length_xp')
+    call get_parameter(length_ym,'sponge.length_ym')
+    call get_parameter(length_yp,'sponge.length_yp')
+    !     call get_parameter(length_zm,'sponge.length_zm')
+    !     call get_parameter(length_zp,'sponge.length_zp')
+
+    call get_parameter(amplitude,'sponge.amplitude',default=1.0_rk) ! default
+
+    ! get non strechted / equidistant grid
+    call load(X_calc,'geometry_calc_space')
+
+    ! xm
+    len = length_xm
+    x_min = x10 + len
+    x_max = x10
+    sigma = (((X_calc(:,:,:,1) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,1) > x_min ) sigma = -1.0_rk
+    phi_shape = abs(sigma)
+
+    ! xp
+    len = length_xp
+    x_min  = x11 - len
+    x_max  = x11
+    sigma = (((X_calc(:,:,:,1) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,1) < x_min ) sigma = -1.0_rk
+    phi_shape = phi_shape * abs(sigma)
+
+    ! ym
+    len = length_ym
+    x_min = x20 + len
+    x_max = x20
+    sigma = (((X_calc(:,:,:,2) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,2) > x_min ) sigma = -1.0_rk
+    phi_shape = phi_shape * abs(sigma)
+
+    ! yp
+    len = length_yp
+    x_min  = x21 - len
+    x_max  = x21
+    sigma = (((X_calc(:,:,:,2) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,2) < x_min ) sigma = -1.0_rk
+    phi_shape = phi_shape * abs(sigma)
+
+    !     ! peridoc in z direction so no sponge!!!!
+    !     ! zm
+    !     len = length_zm
+    !     x_min = x30 + len
+    !     x_max = x30
+    !     sigma = (((X_calc(:,:,:,3) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    !     where(X_calc(:,:,:,3) > x_min ) sigma = -1.0_rk
+    !     phi_shape = phi_shape * abs(sigma)
+    !
+    !     ! zp
+    !     len = length_zp
+    !     x_min  = x31 - len
+    !     x_max  = x31
+    !     sigma = (((X_calc(:,:,:,3) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    !     where(X_calc(:,:,:,3) < x_min ) sigma = -1.0_rk
+    !     phi_shape = phi_shape * abs(sigma)
+
+    deallocate(sigma)
+
+    ! invert phi_shape to the range [0,1]. 1 is where the boundary is located. 0 is inner point.
+    phi_shape = 1.0_rk - phi_shape
+
+    ! pre-multiply amplitude (equal for all quantities)
+    phi_shape = amplitude*phi_shape
+
+    ! store sponge
+    !     if (params%io%verbosity.ge.2) call store(phi_shape,'shape_fct')
+    call store(phi_shape,'sponge_shape_function')
+
+  end subroutine init_general_shape_fct_grid_transform
+!!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine init_general_shape_fct_grid_transform_3D(phi_shape, fct_pointer)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:), allocatable, intent(out)    :: phi_shape
+    interface
+       function fct_pointer(x,x0,len0) result(y)
+         import                                                  :: rk
+         real(kind=rk), dimension(:,:,:), intent(in)             :: x
+         real(kind=rk), intent(in)                               :: x0, len0
+         real(kind=rk), dimension(size(x,1),size(x,2),size(x,3)) :: y
+       end function fct_pointer
+    end interface
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk),dimension(:,:,:)  , allocatable                :: sigma
+    real(kind=rk),dimension(:,:,:,:), allocatable                :: X_calc
+    real(kind=rk)                                                :: x10,x11,x20,x21,x30,x31
+    real(kind=rk)                                                :: amplitude,len
+    real(kind=rk)                                                :: x_min,x_max
+    real(kind=rk)                                                :: length_xm, length_xp
+    real(kind=rk)                                                :: length_ym, length_yp
+    real(kind=rk)                                                :: length_zm, length_zp
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if(.not.allocated(phi_shape)) then
+       allocate(phi_shape(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+       allocate(sigma(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+       allocate(       X_calc(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
+    end if
+
+    ! get block dimensions from parameter.dat
+    call get_parameter(x10,'geom.x10',default = 0.0_rk)
+    call get_parameter(x20,'geom.x20',default = 0.0_rk)
+    call get_parameter(x30,'geom.x30',default = 0.0_rk)
+    call get_parameter(x11,'geom.x11',default = 1.0_rk)
+    call get_parameter(x21,'geom.x21',default = 1.0_rk)
+    call get_parameter(x31,'geom.x31',default = 1.0_rk)
+
+    ! get sponge dimensions from parameter.dat (based on equdistant grid)
+    call get_parameter(length_xm,'sponge.length_xm')
+    call get_parameter(length_xp,'sponge.length_xp')
+    call get_parameter(length_ym,'sponge.length_ym')
+    call get_parameter(length_yp,'sponge.length_yp')
+    call get_parameter(length_zm,'sponge.length_zm')
+    call get_parameter(length_zp,'sponge.length_zp')
+
+    call get_parameter(amplitude,'sponge.amplitude',default=1.0_rk) ! default
+
+    ! get non strechted / equidistant grid
+    call load(X_calc,'geometry_calc_space')
+
+    ! xm
+    len = length_xm
+    x_min = x10 + len
+    x_max = x10
+    sigma = (((X_calc(:,:,:,1) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,1) > x_min ) sigma = -1.0_rk
+    phi_shape = abs(sigma)
+
+    ! xp
+    len = length_xp
+    x_min  = x11 - len
+    x_max  = x11
+    sigma = (((X_calc(:,:,:,1) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,1) < x_min ) sigma = -1.0_rk
+    phi_shape = phi_shape * abs(sigma)
+
+    ! ym
+    len = length_ym
+    x_min = x20 + len
+    x_max = x20
+    sigma = (((X_calc(:,:,:,2) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,2) > x_min ) sigma = -1.0_rk
+    phi_shape = phi_shape * abs(sigma)
+
+    ! yp
+    len = length_yp
+    x_min  = x21 - len
+    x_max  = x21
+    sigma = (((X_calc(:,:,:,2) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,2) < x_min ) sigma = -1.0_rk
+    phi_shape = phi_shape * abs(sigma)
+
+    ! zm
+    len = length_zm
+    x_min = x30 + len
+    x_max = x30
+    sigma = (((X_calc(:,:,:,3) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,3) > x_min ) sigma = -1.0_rk
+    phi_shape = phi_shape * abs(sigma)
+
+    ! zp
+    len = length_zp
+    x_min  = x31 - len
+    x_max  = x31
+    sigma = (((X_calc(:,:,:,3) - x_min)/(x_max - x_min))**2) - 1.0_rk
+    where(X_calc(:,:,:,3) < x_min ) sigma = -1.0_rk
+    phi_shape = phi_shape * abs(sigma)
+
+    deallocate(sigma)
+
+    ! invert phi_shape to the range [0,1]. 1 is where the boundary is located. 0 is inner point.
+    phi_shape = 1.0_rk - phi_shape
+
+    ! pre-multiply amplitude (equal for all quantities)
+    phi_shape = amplitude*phi_shape
+
+    ! store sponge
+    !     if (params%io%verbosity.ge.2) call store(phi_shape,'shape_fct')
+    call store(phi_shape,'sponge_shape_function')
+
+  end subroutine init_general_shape_fct_grid_transform_3D
+!!!=================================================================================================
+
 
 end module shape_functions

@@ -1,10 +1,12 @@
 module euler_rho_rhou_p_ev_phi_grid_transform_trafos
 
   use parameter
+  use volume_penalization
 
   private
 
   public give_T, give_c, give_r, give_u, give_p
+  public apply_matrix_ATm1
 
 contains
 
@@ -90,6 +92,48 @@ contains
     end do
 
   end function give_u
+!!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine apply_matrix_ATm1(vec_out,vec_in,q) ! vec: typically qs (adjoint state) or g (drive of the adjoint)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:,:), intent(out)              :: vec_out    
+    real(kind=rk), dimension(:,:,:,:), intent(in)               :: vec_in
+    real(kind=rk), dimension(:,:,:,:), intent(in)               :: q
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), dimension(:,:,:,:), allocatable              :: ui
+    real(kind=rk), dimension(:,:,:)  , allocatable              :: rho
+    integer                                                     :: i
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    allocate(ui(params%geom%n1b,params%geom%n2b,params%geom%n3b,3))
+    ui  = give_u(q)
+    
+    allocate(rho(params%geom%n1b,params%geom%n2b,params%geom%n3b))
+    rho = give_r(q)
+
+    !-(A^T)^(-1)*(1/phi)
+    !(A.transpose()).inv()
+    !   [1, -u_1/rho, -u_2/rho, -u_3/rho,         0]
+    !   [0,    1/rho,        0,        0,         0]
+    !   [0,        0,    1/rho,        0,         0]
+    !   [0,        0,        0,    1/rho,         0]
+    !   [0,        0,        0,        0, gamma - 1] / phi
+
+    vec_out(:,:,:,1) = 1.0_rk*vec_in(:,:,:,1) &
+         -ui(:,:,:,1)/rho*vec_in(:,:,:,2) &
+         -ui(:,:,:,2)/rho*vec_in(:,:,:,3) &
+         -ui(:,:,:,3)/rho*vec_in(:,:,:,4)
+    vec_out(:,:,:,2) = 1.0_rk/rho*vec_in(:,:,:,2)
+    vec_out(:,:,:,3) = 1.0_rk/rho*vec_in(:,:,:,3)
+    vec_out(:,:,:,4) = 1.0_rk/rho*vec_in(:,:,:,4)
+    vec_out(:,:,:,5) = (params%material%gamma - 1.0_rk)*vec_in(:,:,:,5)
+
+    do i = 1,5
+       vec_out(:,:,:,i) = vec_out(:,:,:,i)*penalization(:,:,:,2) ! *penalization(:,:,:,2) --> 1/phi
+    end do
+
+  end subroutine apply_matrix_ATm1
 !!!=================================================================================================
 
 end module euler_rho_rhou_p_ev_phi_grid_transform_trafos

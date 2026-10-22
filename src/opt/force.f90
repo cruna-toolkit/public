@@ -11,6 +11,7 @@ module force
   public backup_force
   public calc_grad
   public init_force
+  public load_force_subsets_cache
   public store_force
   public restore_force
   public update_force
@@ -79,6 +80,22 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! do nothing, if you need a forcing please use over-ride functionality of the makefile
   end subroutine update_force
+!!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine load_force_subsets_cache
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ! do nothing, if you need a forcing please use over-ride functionality of the makefile
+
+    ! e.g.
+    ! if(params%parallelism%block_image.eq.1) then
+    !   if (params%io%verbosity.ge.1) then
+    !      write(*,*) " load force of subset", s
+    !   end if
+    ! end if
+    ! call load(f,'force_subsets_cache')
+
+  end subroutine load_force_subsets_cache
 !!!=================================================================================================
 
 end module force

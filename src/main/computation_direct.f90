@@ -107,6 +107,11 @@ contains
              call store(qn,'data_direct_snapshot')
           end if
 
+          ! snapshot with loop number
+          if (mod(nt,params%io%dslfreq).eq.0) then
+             call store(qn,'data_direct_snapshot_loop')
+          end if
+
           ! time_series
           call sample(qn)
           call probe(qn)

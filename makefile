@@ -37,11 +37,16 @@ include $(CRUNA_ROOT)/makefiles/local/$(LOCAL_MAKEFILE)
 # LCDIR       	local compiler library directories to include, eg -I/libpath/to/include	>>> used by makefile_cruna_objects
 # LCOPT       	local compiler flags and library names (aka FFLAGS)			>>> used by makefile_cruna_objects
 # LLDIR		local linker library directories (aka LDFLAGS), eg -L/libpath/to/lib 	>>> used by this makefile
-# LLOPT       	local linker library names (aka LDLIBS), eg -lfoo 			>>> used by this makefile
+# LLOPT		local linker library names (aka LDLIBS), eg -lfoo 			>>> used by this makefile
 
 export USR = $(strip $(CRUNA_ROOT)/usr/$(USER))
 export CAS = $(strip $(CRUNA_ROOT)/usr/$(USER)/$(CASE))
 export TAR = $(MAKECMDGOALS)
+
+# Main-program objects: only one may be linked into an executable.
+# Compute LINK_OBJS in the target recipe so that newly compiled objects are included.
+MAIN_OBJS = cruna.o cruna_hpc.o cruna_cdps.o cruna_adj.o cruna_split.o
+LINK_OBJS = $(notdir $(filter-out $(addprefix $(OBJ)/,$(filter-out $@.o,$(MAIN_OBJS))),$(wildcard $(OBJ)/*.o)))
 
 # complog
 .NOTPARALLEL: complog
@@ -88,8 +93,8 @@ cruna: complog reporting folders dep cruna_objects
 	@echo "LINK CRUNA: "
 	@echo "=========== "
 #       link objects (*.o) and libs (see local makefile)
-	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
-	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
+	@echo         $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
+	@cd $(OBJ) && $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna
 
 .PHONY: cruna_hpc
 cruna_hpc: complog reporting folders dep cruna_objects
@@ -98,8 +103,8 @@ cruna_hpc: complog reporting folders dep cruna_objects
 	@echo "LINK CRUNA_HPC: "
 	@echo "=============== "
 #       link objects (*.o) and libs (see local makefile)
-	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
-	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
+	@echo         $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
+	@cd $(OBJ) && $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_hpc
 
 .PHONY: cruna_cdps
 cruna_cdps: complog reporting folders dep cruna_objects
@@ -108,8 +113,8 @@ cruna_cdps: complog reporting folders dep cruna_objects
 	@echo "LINK CRUNA_CDPS: "
 	@echo "================ "
 #       link objects (*.o) and libs (see local makefile)
-	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps
-	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps
+	@echo         $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps
+	@cd $(OBJ) && $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_cdps
 
 .PHONY: cruna_adj
 cruna_adj: complog reporting folders dep cruna_objects
@@ -118,8 +123,18 @@ cruna_adj: complog reporting folders dep cruna_objects
 	@echo "LINK CRUNA_ADJ: "
 	@echo "=============== "
 #       link objects (*.o) and libs (see local makefile)
-	@echo         $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_adj
-	@cd $(OBJ) && $(FC) *.o $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_adj
+	@echo         $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_adj
+	@cd $(OBJ) && $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_adj
+
+.PHONY: cruna_split
+cruna_split: complog reporting folders dep cruna_objects
+	@echo ""
+	@echo "================= "
+	@echo "LINK CRUNA_SPLIT: "
+	@echo "================= "
+#       link only the selected main program and all required module objects
+	@echo         $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_split
+	@cd $(OBJ) && $(FC) $(LINK_OBJS) $(LLDIR) $(LLOPT) $(LOPT) -o $(BIN)/cruna_split
 
 ####################################################################################################
 # HELPER
@@ -170,7 +185,7 @@ clean_all: clean
 # emacs tags
 .NOTPARALLEL: tags
 .PHONY: tags
-tags: 
+tags:
 	@rm -f etags	
 	@FILES=`find $$CAS $$SRC -name "*.f90"`; \
 	etags -o ./etags $$FILES
@@ -201,3 +216,4 @@ fftw3:
 
 openBLAS:
 	@$(MAKE) -f makefiles/makefile_ext_openBLAS
+

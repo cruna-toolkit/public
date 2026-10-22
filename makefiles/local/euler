@@ -1,4 +1,4 @@
-#############################
+q#############################
 #                           #
 #  -- envirnoment info--    #
 #                           #
@@ -44,6 +44,6 @@ endif
 ############################
 
 LLOPT+=-lhdf5_fortran -lhdf5_hl -lhdf5hl_fortran -lhdf5 -lz -ldl 	# includes hdf5 library (here, linking arguments do not depend on the selected compiler/linker)
-LLOPT+=-lfftw3                                                          # includes FFTW3 library
+LLOPT+=-lfftw3 -lfftw3f                                                 # includes FFTW3 library
 LLOPT+=-lopenblas                                                       # includes openBLAS library using gfortran
 

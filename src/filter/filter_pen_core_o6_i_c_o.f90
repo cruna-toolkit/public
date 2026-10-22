@@ -1,5 +1,6 @@
 module filter_pen_core_o6_i_c_o
 
+  use lapack_tridiag , only: gttrf, gttrs
   use parameter
 
   private
@@ -135,7 +136,7 @@ contains
     q = q_tmp
 
     ! solve BU'
-    call dgttrs('no transpose', n1, n2, dl, dc, du, du2, ipiv, q, n1, info)
+    call gttrs('no transpose', n1, n2, dl, dc, du, du2, ipiv, q, n1, info)
     if(info.ne.0) then
        write(*,*) "error in filter_pen_core_o6_i_c_o.f90:filter_main:error with id: ",info
     end if
@@ -200,7 +201,7 @@ contains
 !!!==================================================================================================
   subroutine init_left_implicit_filter_part(dl,dc,du,du2,ipiv,n1) ! output args
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! LU decomposition for dgttrf
+    ! LU decomposition for gttrf
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     real(kind=rk), dimension(:), allocatable, intent(out) :: dl,dc,du,du2
     integer      , dimension(:), allocatable, intent(out) :: ipiv
@@ -232,7 +233,7 @@ contains
     du(1)    = 0.0_rk  
     dl(n1-1) = 0.0_rk
 
-    call dgttrf(n1, dl, dc, du, du2, ipiv, info)
+    call gttrf(n1, dl, dc, du, du2, ipiv, info)
     if(info.ne.0) then
        write(*,*) "error in filter_pen_core_o6_i_c_o.f90:init_left_implicit_filter_part:error with id: ",info
     end if

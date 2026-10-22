@@ -1,5 +1,6 @@
 module filter_pen_core_o4_i_c_o
 
+  use lapack_tridiag , only: gttrf, gttrs
   use parameter
 
   private
@@ -90,7 +91,7 @@ contains
     integer       , dimension(:)  , intent(in)          :: ipiv                                    ! left implicit stencil  B 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     real(kind=rk) , dimension(:,:), allocatable         :: q_tmp
-    real(kind=rk)                                       :: a0,a1,a2,a3
+    real(kind=rk)                                       :: a0,a1,a2
     integer                                             :: n1,n2
     integer                                             :: i,j,info
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -128,7 +129,7 @@ contains
     q = q_tmp
 
     ! solve BU'
-    call dgttrs('no transpose', n1, n2, dl, dc, du, du2, ipiv, q, n1, info)
+    call gttrs('no transpose', n1, n2, dl, dc, du, du2, ipiv, q, n1, info)
     if(info.ne.0) then
        write(*,*) "error in filter_pen_core_o6_i_c_o.f90:filter_main:error with id: ",info
     end if
@@ -146,7 +147,7 @@ contains
     real(kind=rk) , dimension(1,5)  , intent(out)       :: coefficients_for_boundary
     real(kind=rk) , dimension(3)    , intent(out)       :: stencil
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk)                                       :: a0,a1,a2,a3, alpha
+    real(kind=rk)                                       :: a0,a1,a2,alpha
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     ! get free parameter alpha
@@ -180,7 +181,7 @@ contains
 !!!==================================================================================================
   subroutine init_left_implicit_filter_part(dl,dc,du,du2,ipiv,n1) ! output args
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    ! LU decomposition for dgttrf
+    ! LU decomposition for gttrf
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     real(kind=rk), dimension(:), allocatable, intent(out) :: dl,dc,du,du2
     integer      , dimension(:), allocatable, intent(out) :: ipiv
@@ -212,7 +213,7 @@ contains
     du(1)    = 0.0_rk  
     dl(n1-1) = 0.0_rk
 
-    call dgttrf(n1, dl, dc, du, du2, ipiv, info)
+    call gttrf(n1, dl, dc, du, du2, ipiv, info)
     if(info.ne.0) then
        write(*,*) "error in filter_pen_core_o6_i_c_o.f90:init_left_implicit_filter_part:error with id: ",info
     end if

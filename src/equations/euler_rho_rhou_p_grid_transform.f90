@@ -15,7 +15,7 @@ module euler_rho_rhou_p_grid_transform
   use force
   use io
   use parameter
-  use sponge_layer
+!   use sponge_layer
 
   private
 
@@ -133,7 +133,7 @@ contains
     call apply_force(rhs)
 
 !!! sponge layer
-    call sponge(rhs,q,qref)
+!     call sponge(rhs,q,qref)
 
 !!! boundary conditions 2/2: rhs
     call set_boundary_condition_rhs(rhs,q)
@@ -467,14 +467,17 @@ contains
      rhs(:,:,:,5) =  X_jacobian * rhs(:,:,:,5)
 
 !!! adjoint force
-! note that g already accounts for -(A^T)^(-1)*g
+! Note: Although this technically represents -g, the sign convention is handled
+!       within calc_objective_g to maintain consistency with existing user cases.
+!       The multiplication by (A^T)^(-1) is an additional step already applied within g,
+!       so this line effectively corresponds to rhs - (A^T)^(-1) * g.
     rhs = rhs + g
 
 !!! adjoint sponge
-    call sponge_adjoint(rhs,qs,q)
+!     call sponge_adjoint(rhs,qs,q)
 
 !!! boundary conditions 2/2: rhss
-    call set_boundary_condition_rhss(rhs,qs)
+    call set_boundary_condition_rhss(rhs,qs,q)
 
     deallocate(qs)
 

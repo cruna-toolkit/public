@@ -63,6 +63,9 @@ contains
 
 !!! boundary conditions 1/2: q
     call set_boundary_condition_q(q)
+    
+!!! move volume penalization in time
+    call move_volume_penalization(t) 
      
 !!! set density of air at T= 293,15K and speed of sound
     rho0 = params%init%rho
@@ -142,11 +145,11 @@ contains
     real(kind=rk), dimension(:,:,:,:), intent(in)    :: g
     real(kind=rk)                    , intent(in)    :: t
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(kind=rk), dimension(:,:,:,:), allocatable   :: qs
-    real(kind=rk), dimension(:,:,:)  , allocatable   :: u_1,u_2,u_3
-    real(kind=rk), dimension(:,:,:)  , allocatable   :: a_x,b_x,c_x,d_x,e_x
-    real(kind=rk), dimension(:,:,:)  , allocatable   :: gamma_DOT_p_INV_rho_gm1, INV_rho
-    real(kind=rk)                                    :: gm1
+    ! real(kind=rk), dimension(:,:,:,:), allocatable   :: qs
+    ! real(kind=rk), dimension(:,:,:)  , allocatable   :: u_1,u_2,u_3
+    ! real(kind=rk), dimension(:,:,:)  , allocatable   :: a_x,b_x,c_x,d_x,e_x
+    ! real(kind=rk), dimension(:,:,:)  , allocatable   :: gamma_DOT_p_INV_rho_gm1, INV_rho
+    ! real(kind=rk)                                    :: gm1
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     rhs = 0.0_rk

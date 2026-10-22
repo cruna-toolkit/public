@@ -84,9 +84,15 @@ program cruna_adj
   call get_parameter(fi2freq,'filter.ai2freq',default = huge(1))
   call get_parameter(fi3freq,'filter.ai3freq',default = huge(1))
 
-  ! store initial condition
+  ! store initial condition(s)
+  call set_parameter(0,'time.nt',struct_val=params%time%nt)
+  call set_parameter(1,'time.ns',struct_val=params%time%ns)
+  call store(q0 ,'data_direct_snapshot' )
+
   call set_parameter(params%time%steps + 1,'time.nt',struct_val=params%time%nt)
+  call set_parameter(params%time%subsets  ,'time.ns',struct_val=params%time%ns)
   call store(qs0,'data_adjoint_snapshot')
+
 
   qsn = qs0 ! normal start, maybe overwritten by restart procedure
 
@@ -125,8 +131,8 @@ program cruna_adj
   end if
 
   ! get start subset s0 und start time-step nt0:
-  nt_total = (ns_nt_start(1)-1)*params%time%steps + ns_nt_start(2) - 1                                   ! computing overall time-step based on subset und time-step, minus 1 (to avoid recomputing), nt_total: nt with subsets = 1
-  s0       = nt_total/params%time%steps + 1                                                              ! gives s0 (using integer arithmetic)
+  nt_total = (ns_nt_start(1)-1)*params%time%steps + ns_nt_start(2)                                       ! computing overall time-step based on subset und time-step, minus 1 (to avoid recomputing), nt_total: nt with subsets = 1
+  s0       = nt_total/params%time%steps                                                                  ! gives s0 (using integer arithmetic)
   nt0      = nt_total - (s0-1)*params%time%steps
 
   call set_parameter(s0 ,'init.s0' )

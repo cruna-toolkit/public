@@ -378,6 +378,10 @@ contains
          - qs(:,:,:,5)*INV_rho                         * a_x
 
 !!! adjoint force
+! Note: Although this technically represents -g, the sign convention is handled
+!       within calc_objective_g to maintain consistency with existing user cases.
+!       The multiplication by (A^T)^(-1) is an additional step already applied within g,
+!       so this line effectively corresponds to rhs - (A^T)^(-1) * g.
     rhs = rhs + g
 
 !!! boundary conditions 2/2: rhss (e.g. no-slip wall)

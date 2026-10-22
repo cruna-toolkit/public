@@ -11,6 +11,7 @@ module volume_penalization
   public backup_volume_penalization
   public calc_grad_volume_penalization
   public init_volume_penalization
+  public move_volume_penalization
   public store_volume_penalization
   public restore_volume_penalization
   public update_volume_penalization
@@ -57,6 +58,17 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     ! do nothing, if you need a volume_penalization please use over-ride functionality of the makefile
   end subroutine init_volume_penalization
+!!!=================================================================================================
+
+!!!=================================================================================================
+  subroutine move_volume_penalization(t)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(kind=rk), intent(in), optional                                            :: t
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    ! do nothing, if you need a volume_penalization please use over-ride functionality of the makefile
+
+  end subroutine move_volume_penalization
 !!!=================================================================================================
 
 !!!=================================================================================================

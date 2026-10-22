@@ -44,7 +44,7 @@ program cruna_hpc
   integer                                            :: fi1freq ,fi2freq ,fi3freq
   integer                                            :: fwi1freq,fwi2freq,fwi3freq
   character(len=max_length_fname)                    :: restartfile
-  logical                                            :: restart, file_exisit
+  logical                                            :: restart, file_exist
 
 !!! START !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   call init_parallelism                   ! set image, block, communicators, spmd_type
@@ -116,9 +116,9 @@ program cruna_hpc
 
         call get_fname(restartfile,'restartfile')
         restartfile = trim(restartfile) // ".h5"
-        call inquire_file(restartfile,file_exisit)
+        call inquire_file(restartfile,file_exist)
 
-        if(file_exisit.eqv..true.) then
+        if(file_exist.eqv..true.) then
            call load(ns_nt_start, 'restartfile')
 
            write(*,*)
@@ -241,10 +241,6 @@ program cruna_hpc
            call filter_weighted_i3(qn)
         end if
 
-        ! time_series
-        call sample(qn)
-        call probe(qn)
-
         ! wall time
         call cpu_time(cputime_loc_r)
         cputime_loc = real(cputime_loc_r,rk)                                            ! transfer from real (cpu_time intrinsic) to real_rk (cruna)
@@ -252,20 +248,35 @@ program cruna_hpc
 
         if (cputime_glo.gt.walltime) then
 
-           call store(qn,'data_direct_snapshot')
-           if(params%parallelism%block_image.eq.1) then
-              ns_nt_start(1) = s
-              ns_nt_start(2) = nt
-              call store(ns_nt_start, 'restartfile', file_overwrite_optin=.true.)
-           end if
+            ! Optional: Update dsfreq to ensure sample is saved
+            call set_parameter(1, 'io.dsfreq', struct_val=params%io%dsfreq)
 
-           if(params%parallelism%world_image.eq.1) then
-              write(*,*) 'cruna walltime reached: ',trim(num2str(cputime_glo/3600_rk,'(F10.7)'))," (",trim(num2str(walltime/3600_rk,'(F10.7)')) ,") hrs"
-              write(*,*) "last timestep ", trim(num2str(params%time%nt,'(I7.7)'))," in sub-set ", trim(num2str(params%time%ns,'(I7.7)'))
-           end if
+            ! Ensure latest sample is saved
+            call sample(qn)
 
-           call stop_cruna
+            ! Save snapshot
+            call store(qn, 'data_direct_snapshot')
+
+            ! Save restart info
+            if (params%parallelism%block_image.eq.1) then
+                ns_nt_start(1) = s
+                ns_nt_start(2) = nt
+                call store(ns_nt_start, 'restartfile', file_overwrite_optin = .true.)
+            end if
+
+            if (params%parallelism%world_image.eq.1) then
+                write(*,*) 'cruna walltime reached: ', trim(num2str(cputime_glo/3600_rk,'(F10.7)')), &
+                            " (", trim(num2str(walltime/3600_rk,'(F10.7)')), ") hrs"
+                write(*,*) "last timestep ", trim(num2str(params%time%nt,'(I7.7)')), &
+                            " in sub-set ", trim(num2str(params%time%ns,'(I7.7)'))
+            end if
+
+            call stop_cruna
         end if
+
+        ! time_series
+        call sample(qn)
+        call probe(qn)
 
         ! snapshot
         if (mod(nt,params%io%dsfreq).eq.0) then
