@@ -23,8 +23,9 @@ ifeq (intel, $(strip $(COMP)))
      #LCOPT+=-xCORE-AVX512#	# slower compilation, faster execution
 endif
 ifeq (gnu, $(strip $(COMP)))
-     export FC = mpif90 #       # MPI wrapper for Fortran
-     export CC = mpicc #        # for C libaries
+     export FC = mpif90         # mpif90 as wrapper for gfortran
+     export CC = mpicc          # standard gcc, used for libaries
+     export CXX = mpicxx        # standard g++, used for libaries
 
      # inactive: (march=native in generic makefile is sufficient)
      ### LCOPT+=-march=core-avx2
